@@ -3,34 +3,37 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>護家名單系統 ＿ [RAW_EDITION]</title>
+    <title>護家名單系統 ｜ 手工鍛造版</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&family=JetBrains+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
     <style>
         /* ========================================
-           CSS 變數 — 工業反主流配色
+           反主流美學 — 工業手作暗色系統 (無紫色)
            ======================================== */
         :root {
-            --bg-dark: #161614;
-            --bg-surface: #20201e;
-            --bg-offset: #2c2c2a;
-            
-            --text-light: #eae6d9;
-            --text-dim: #94928b;
-            --text-dark: #161614;
+            --bg-page: #1a1918;     /* 極深暖灰 */
+            --bg-card: #242220;     /* 卡片深灰 */
+            --bg-panel: #2e2c2a;    /* 面板底色 */
+            --bg-sidebar: #141312;  /* 側邊欄極暗色 */
 
-            --accent-orange: #ff5e00;
-            --accent-yellow: #f2b705;
-            --accent-green: #a4b35a;
+            --text-primary: #f4f0ea; /* 暖米白，高對比不刺眼 */
+            --text-secondary: #a8a39a;
+            --text-muted: #736f68;
+            --text-inverse: #1a1918;
 
-            --border-width: 2px;
-            --border-color: #eae6d9;
+            --accent-main: #e87a5d;  /* 赤陶橘 */
+            --accent-sand: #e3c08d;  /* 暖沙黃 */
+            --accent-teal: #5c9e97;  /* 復古綠 */
+            --accent-rose: #c26d6d;  /* 磚紅色 */
+
+            --border-hard: #4a4742;  /* 硬邊框色 */
+            --border-focus: #e87a5d;
+
+            --shadow-hard: 4px 4px 0px var(--border-hard);
+            --shadow-hard-hover: 6px 6px 0px var(--accent-main);
             
-            --shadow-solid: 6px 6px 0px var(--accent-orange);
-            --shadow-solid-hover: 2px 2px 0px var(--accent-orange);
-            --shadow-solid-alt: 4px 4px 0px var(--border-color);
-            
-            --transition-raw: 0.15s cubic-bezier(0, 0, 0.2, 1);
+            --radius-sketch: 255px 15px 225px 15px/15px 225px 15px 255px; /* 手繪感圓角 */
+            --transition-snappy: 0.2s cubic-bezier(0.25, 1, 0.5, 1);
         }
 
         /* ========================================
@@ -39,396 +42,485 @@
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
         body {
-            font-family: 'JetBrains Mono', 'Noto Sans TC', monospace, sans-serif;
-            background-color: var(--bg-dark);
-            color: var(--text-light);
+            font-family: 'Noto Sans TC', sans-serif;
+            background-color: var(--bg-page);
+            color: var(--text-primary);
             line-height: 1.6;
             -webkit-font-smoothing: antialiased;
             overflow-x: hidden;
         }
 
-        /* ========================================
-           圖示 (SVG 手繪幾何風)
-           ======================================== */
-        .icon-raw {
-            width: 24px; height: 24px;
-            fill: none;
-            stroke: currentColor;
+        /* 幾何手繪風格 SVG 圖標通用設定 */
+        .icon {
+            display: inline-block;
+            width: 20px; height: 20px;
             stroke-width: 2.5;
-            stroke-linecap: square;
-            stroke-linejoin: miter;
-            transform: rotate(-3deg); /* 刻意傾斜營造手繪感 */
-            transition: transform var(--transition-raw);
+            stroke: currentColor;
+            fill: none;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            vertical-align: middle;
         }
-        
+
         /* ========================================
-           側邊欄 (不對稱厚重感)
+           手繪感 UI 元件基礎
            ======================================== */
+        .sketch-box {
+            background: var(--bg-card);
+            border: 2px solid var(--border-hard);
+            border-radius: var(--radius-sketch);
+            box-shadow: var(--shadow-hard);
+            transition: transform var(--transition-snappy), box-shadow var(--transition-snappy), border-color var(--transition-snappy);
+        }
+
+        /* ========================================
+           導覽列與側邊欄
+           ======================================== */
+        .hamburger {
+            position: fixed; top: 24px; left: 24px; z-index: 999;
+            width: 50px; height: 50px;
+            display: flex; align-items: center; justify-content: center;
+            background: var(--bg-card);
+            color: var(--accent-sand);
+            border: 2px solid var(--border-hard);
+            border-radius: var(--radius-sketch);
+            box-shadow: 3px 3px 0px var(--border-hard);
+            cursor: pointer;
+            transition: all var(--transition-snappy);
+        }
+        .hamburger:hover {
+            transform: translate(-2px, -2px);
+            box-shadow: 5px 5px 0px var(--accent-sand);
+            border-color: var(--accent-sand);
+        }
+        .hamburger:active { transform: translate(2px, 2px); box-shadow: 0px 0px 0px; }
+
+        .sidebar-overlay {
+            position: fixed; inset: 0; z-index: 999;
+            background: rgba(10, 9, 8, 0.8);
+            opacity: 0; visibility: hidden;
+            transition: opacity 0.3s ease;
+        }
+        .sidebar-overlay.open { opacity: 1; visibility: visible; }
+
         .sidebar {
-            position: fixed; top: 0; left: 0; z-index: 1000;
-            width: 280px; height: 100%;
-            background: var(--bg-dark);
-            border-right: var(--border-width) solid var(--border-color);
-            padding: 40px 0;
+            position: fixed; top: 0; left: -320px; z-index: 1000;
+            width: 320px; height: 100%;
+            background: var(--bg-sidebar);
+            border-right: 2px solid var(--border-hard);
+            padding-top: 30px;
+            transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             display: flex; flex-direction: column;
         }
+        .sidebar.open { left: 0; }
 
+        .sidebar-header {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 0 30px 30px 30px;
+            border-bottom: 2px solid var(--border-hard);
+        }
         .sidebar-brand {
-            padding: 0 30px 40px;
-            font-size: 14px; font-weight: 700;
+            font-size: 16px; font-weight: 900;
             letter-spacing: 2px;
-            color: var(--accent-orange);
+            color: var(--text-primary);
             text-transform: uppercase;
-            border-bottom: var(--border-width) dashed var(--text-dim);
-            margin-bottom: 20px;
         }
+        .closebtn {
+            background: transparent; border: none;
+            color: var(--text-muted); cursor: pointer;
+            transition: color var(--transition-snappy);
+        }
+        .closebtn:hover { color: var(--accent-main); }
 
-        .sidebar a.menu-link {
+        .sidebar-nav { padding: 30px 20px; display: flex; flex-direction: column; gap: 12px; }
+
+        .menu-link {
             display: flex; align-items: center; gap: 16px;
-            padding: 16px 30px;
-            text-decoration: none; font-size: 15px; font-weight: 700;
-            color: var(--text-dim);
-            transition: all var(--transition-raw);
-            border-left: 0px solid var(--accent-orange);
+            padding: 16px 20px;
+            text-decoration: none; font-size: 16px; font-weight: 700;
+            color: var(--text-secondary);
+            border: 2px solid transparent;
+            border-radius: var(--radius-sketch);
+            transition: all var(--transition-snappy);
         }
-        
-        .sidebar a.menu-link:hover {
-            color: var(--text-light);
-            background: var(--bg-surface);
+        .menu-link:hover {
+            border-color: var(--border-hard);
+            color: var(--text-primary);
+            transform: translateX(5px);
         }
-        
-        .sidebar a.menu-link.active {
-            color: var(--bg-dark);
-            background: var(--accent-orange);
-            border-left: 8px solid var(--text-light);
+        .menu-link.active {
+            background: var(--text-primary);
+            color: var(--text-inverse);
+            border-color: var(--text-primary);
+            box-shadow: 3px 3px 0px var(--accent-sand);
         }
-        .sidebar a.menu-link.active .icon-raw {
-            transform: rotate(0deg) scale(1.1);
-            stroke: var(--bg-dark);
-        }
-
-        /* 隱藏原生漢堡選單，改用桌面優先的不對稱佈局 */
-        .hamburger, .sidebar-overlay, .closebtn { display: none; }
 
         /* ========================================
-           主區域 (錯位排版)
+           主區域結構
            ======================================== */
         .main-content {
-            margin-left: 280px;
-            padding: 60px;
-            max-width: 1200px;
+            padding: 40px 24px;
+            padding-top: 100px;
+            max-width: 1080px;
+            margin: 0 auto;
         }
 
         .container {
-            background: var(--bg-dark);
-            border: var(--border-width) solid var(--border-color);
-            padding: 40px;
-            box-shadow: var(--shadow-solid-alt);
-            margin-bottom: 40px;
-            position: relative;
+            display: none;
+            animation: glitchFade 0.4s ease-out forwards;
         }
-        /* 讓容器產生錯位感 */
-        .container:nth-child(even) {
-            transform: translateX(20px);
+        .container.active { display: block; }
+
+        @keyframes glitchFade {
+            0% { opacity: 0; transform: translateY(10px) skewX(2deg); }
+            100% { opacity: 1; transform: translateY(0) skewX(0); }
         }
 
         /* ========================================
-           標題
+           標題與排版
            ======================================== */
         .section-title {
             font-size: 28px; font-weight: 900;
             margin-bottom: 30px;
-            text-transform: uppercase;
-            letter-spacing: -1px;
             display: flex; align-items: center; gap: 12px;
+            letter-spacing: 1px;
         }
-        .section-title::before {
-            content: '';
-            display: block;
-            width: 20px; height: 20px;
-            background: var(--accent-orange);
-            border: 2px solid var(--text-light);
-        }
+        .c-main { color: var(--accent-main); }
+        .c-sand { color: var(--accent-sand); }
+        .c-teal { color: var(--accent-teal); }
 
         /* ========================================
-           控制面板 & 輸入元素 (硬朗工業風)
+           控制面板與表單
            ======================================== */
         .control-panel {
-            background: var(--bg-surface);
             padding: 30px;
-            border: var(--border-width) solid var(--border-color);
-            margin-bottom: 30px;
+            margin-bottom: 40px;
+            background: var(--bg-panel);
         }
 
         .row-group { margin-bottom: 24px; }
-
         .row-group label {
-            display: block;
-            font-size: 14px; font-weight: 700;
-            color: var(--accent-yellow);
-            margin-bottom: 10px;
-            text-transform: uppercase;
+            display: flex; align-items: center; gap: 8px;
+            font-size: 15px; font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 12px;
         }
 
         textarea, input[type="text"], input[type="number"], select {
-            font-family: 'JetBrains Mono', 'Noto Sans TC', monospace;
+            font-family: 'JetBrains Mono', 'Noto Sans TC', sans-serif;
             width: 100%;
-            padding: 14px;
-            border: var(--border-width) solid var(--text-dim);
-            background: var(--bg-dark);
-            color: var(--text-light);
-            font-size: 16px;
-            border-radius: 0;
+            padding: 16px;
+            background: var(--bg-page);
+            border: 2px solid var(--border-hard);
+            color: var(--text-primary);
+            font-size: 15px; font-weight: 500;
+            border-radius: var(--radius-sketch);
+            box-shadow: inset 2px 2px 0px rgba(0,0,0,0.2);
+            transition: all var(--transition-snappy);
             outline: none;
-            transition: all var(--transition-raw);
         }
-        textarea { height: 160px; resize: vertical; }
-        
+        textarea { height: 160px; resize: vertical; line-height: 1.6; }
         textarea:focus, input:focus, select:focus {
-            border-color: var(--accent-orange);
-            box-shadow: 4px 4px 0px var(--accent-orange);
+            border-color: var(--border-focus);
+            box-shadow: 4px 4px 0px var(--border-focus);
             transform: translate(-2px, -2px);
         }
+        textarea::placeholder { color: var(--text-muted); }
 
         /* ========================================
-           實體按鍵 (Brutalist Buttons)
+           工業風手作按鈕
            ======================================== */
         .btn {
             display: inline-flex; align-items: center; justify-content: center; gap: 10px;
-            padding: 16px 24px;
-            border: var(--border-width) solid var(--border-color);
-            background: var(--bg-dark);
-            color: var(--text-light);
-            font-family: 'JetBrains Mono', 'Noto Sans TC', monospace;
-            font-size: 16px; font-weight: 700;
-            text-transform: uppercase;
+            padding: 16px 28px;
+            font-family: 'Noto Sans TC', sans-serif;
+            font-size: 16px; font-weight: 900; letter-spacing: 1px;
+            background: var(--bg-card);
+            color: var(--text-primary);
+            border: 2px solid var(--border-hard);
+            border-radius: var(--radius-sketch);
+            box-shadow: var(--shadow-hard);
             cursor: pointer;
-            box-shadow: var(--shadow-solid);
-            transition: all var(--transition-raw);
-            border-radius: 0;
+            transition: all var(--transition-snappy);
+            text-transform: uppercase;
         }
-        
         .btn:hover {
-            transform: translate(2px, 2px);
-            box-shadow: var(--shadow-solid-hover);
+            transform: translate(-2px, -2px);
+            box-shadow: 6px 6px 0px currentColor;
         }
         .btn:active {
-            transform: translate(6px, 6px);
-            box-shadow: none;
+            transform: translate(2px, 2px);
+            box-shadow: 0px 0px 0px currentColor;
         }
+        .btn-full { width: 100%; margin-top: 10px; }
 
-        .btn-full { width: 100%; }
-        
-        .btn-primary { background: var(--text-light); color: var(--text-dark); border-color: var(--text-light); box-shadow: 6px 6px 0px var(--accent-orange); }
-        .btn-outline { background: transparent; }
-        .btn-accent { background: var(--accent-yellow); color: var(--text-dark); border-color: var(--text-light); box-shadow: 4px 4px 0px var(--text-light); }
+        .btn-main { border-color: var(--accent-main); color: var(--accent-main); }
+        .btn-main:hover { background: var(--accent-main); color: var(--text-inverse); }
+
+        .btn-sand { border-color: var(--accent-sand); color: var(--accent-sand); }
+        .btn-sand:hover { background: var(--accent-sand); color: var(--text-inverse); }
+
+        .btn-teal { border-color: var(--accent-teal); color: var(--accent-teal); }
+        .btn-teal:hover { background: var(--accent-teal); color: var(--text-inverse); }
+
+        .btn-rose { border-color: var(--accent-rose); color: var(--accent-rose); }
+        .btn-rose:hover { background: var(--accent-rose); color: var(--text-inverse); }
 
         .export-panel {
             display: none;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            grid-template-columns: repeat(3, 1fr);
             gap: 20px; margin-top: 24px;
         }
 
         /* ========================================
-           資料表格 (高對比/斑馬紋)
+           硬派資料表格
            ======================================== */
+        .table-wrapper {
+            border: 2px solid var(--border-hard);
+            border-radius: var(--radius-sketch);
+            overflow: hidden;
+            box-shadow: var(--shadow-hard);
+            background: var(--bg-card);
+            margin-top: 30px;
+        }
         table {
             width: 100%; border-collapse: collapse;
-            font-size: 15px; margin-top: 20px;
-            border: var(--border-width) solid var(--border-color);
+            font-size: 15px; text-align: left;
         }
-        th, td { 
-            padding: 16px; 
-            text-align: left; 
-            border: 1px solid var(--text-dim);
-        }
+        th, td { padding: 16px 20px; border-bottom: 2px solid var(--border-hard); }
         th {
-            background: var(--text-light);
-            color: var(--text-dark);
-            font-weight: 900;
+            background: var(--bg-sidebar);
+            font-weight: 900; letter-spacing: 1px;
+            color: var(--text-secondary);
             text-transform: uppercase;
+            border-bottom: 3px solid var(--border-hard);
         }
-        tbody tr:nth-child(even) { background: var(--bg-surface); }
-        tbody tr:hover { background: rgba(255, 94, 0, 0.1); }
+        tr:last-child td { border-bottom: none; }
+        tbody tr:hover { background: var(--bg-panel); }
+
+        /* 特殊表格直欄標色 */
+        .th-dnr { color: var(--accent-rose); }
+        .th-hospice { color: var(--accent-teal); }
+        .th-none { color: var(--text-secondary); }
 
         /* ========================================
-           儀表板 (解構佈局)
+           資訊儀表板 (Dashboard)
            ======================================== */
         .dashboard {
             display: none;
             grid-template-columns: 1fr 1fr;
             gap: 30px;
-            margin-top: 30px;
+            background: var(--bg-panel);
+            padding: 30px;
+            margin-top: 40px;
         }
         .dashboard.visible { display: grid; }
 
-        .dash-card {
-            background: var(--bg-offset);
-            border: var(--border-width) solid var(--text-dim);
-            padding: 24px;
-            position: relative;
-        }
-        /* 裝飾性釘子 */
-        .dash-card::before, .dash-card::after {
-            content: '+'; position: absolute; color: var(--text-dim); font-size: 20px; line-height: 1;
-        }
-        .dash-card::before { top: 10px; left: 10px; }
-        .dash-card::after { bottom: 10px; right: 10px; }
-
         .dash-item {
-            font-size: 15px; font-weight: 400;
+            font-size: 16px; font-weight: 700;
+            color: var(--text-secondary);
             margin-bottom: 16px;
             display: flex; align-items: center; justify-content: space-between;
-            border-bottom: 1px dashed var(--text-dim);
+            border-bottom: 1px dashed var(--border-hard);
             padding-bottom: 8px;
         }
         .dash-highlight {
-            color: var(--accent-orange);
-            font-size: 20px; font-weight: 900;
+            font-family: 'JetBrains Mono', monospace;
+            color: var(--accent-main);
+            font-size: 22px; font-weight: 900;
         }
 
         .vet-input {
             width: 80px !important;
             padding: 8px !important;
             text-align: right;
-            border-color: var(--accent-yellow);
+            box-shadow: inset 2px 2px 0px rgba(0,0,0,0.3);
         }
+
+        .dash-actions { display: flex; gap: 16px; margin-top: 30px; }
+        .dash-actions .btn { flex: 1; }
 
         /* ========================================
-           狀態標籤 & Radio
+           標籤與自訂 Radio
            ======================================== */
         .tag {
-            display: inline-block;
-            padding: 4px 10px;
+            display: inline-block; padding: 4px 10px;
+            border: 2px solid currentColor;
+            border-radius: var(--radius-sketch);
             font-size: 12px; font-weight: 900;
-            text-transform: uppercase;
-            border: 1px solid currentColor;
+            letter-spacing: 0.5px;
         }
-        .tag-new { color: var(--accent-orange); background: rgba(255,94,0,0.1); }
-        .tag-hosp { color: var(--text-dim); background: rgba(148,146,139,0.1); }
+        .tag-new { color: var(--accent-sand); }
+        .tag-hosp { color: var(--text-muted); border-style: dashed; }
 
+        /* 手作感 Radio Button */
         input[type="radio"] {
             appearance: none;
-            width: 20px; height: 20px;
-            border: 2px solid var(--text-dim);
-            border-radius: 0;
-            background: var(--bg-dark);
-            cursor: pointer;
+            width: 24px; height: 24px;
+            border: 2px solid var(--border-hard);
+            border-radius: 50%; /* 維持圓形但可稍微變形 */
+            outline: none; cursor: pointer;
             position: relative;
+            background: var(--bg-page);
+            transition: all var(--transition-snappy);
         }
         input[type="radio"]:checked {
-            border-color: var(--accent-orange);
+            border-color: var(--accent-main);
         }
         input[type="radio"]:checked::after {
-            content: '';
-            position: absolute;
-            top: 3px; left: 3px; right: 3px; bottom: 3px;
-            background: var(--accent-orange);
+            content: ''; position: absolute;
+            top: 50%; left: 50%; transform: translate(-50%, -50%);
+            width: 10px; height: 10px;
+            background: var(--accent-main);
+            border-radius: 50%;
         }
 
         /* ========================================
            速查區篩選列
            ======================================== */
-        .filter-bar {
-            display: flex; gap: 20px; margin-bottom: 30px;
-        }
+        .filter-bar { display: flex; gap: 20px; margin-bottom: 30px; }
         .filter-bar select { width: 200px; }
         .filter-bar input[type="text"] { flex: 1; }
-
-        .status-msg {
-            font-weight: 700; font-size: 15px;
-            margin-top: 20px; padding: 16px;
-            border: var(--border-width) solid transparent;
-        }
-        .status-msg.success {
-            border-color: var(--accent-green);
-            color: var(--accent-green);
-        }
-        .status-msg.error {
-            border-color: var(--accent-orange);
-            color: var(--accent-orange);
+        .dir-count {
+            margin-top: 20px; text-align: right;
+            color: var(--accent-sand); font-weight: 700;
+            font-family: 'JetBrains Mono', monospace;
         }
 
         /* ========================================
-           響應式 (適應小螢幕)
+           狀態訊息
            ======================================== */
-        @media (max-width: 1024px) {
-            .sidebar { width: 220px; }
-            .main-content { margin-left: 220px; padding: 40px; }
-            .container { transform: none !important; }
+        .status-msg {
+            font-weight: 700; font-size: 16px;
+            margin-top: 20px; padding: 16px;
+            border: 2px solid transparent;
+            border-radius: var(--radius-sketch);
+            display: none;
         }
-        @media (max-width: 768px) {
-            .sidebar { position: relative; width: 100%; height: auto; border-right: none; border-bottom: var(--border-width) solid var(--border-color); padding: 20px 0; }
-            .main-content { margin-left: 0; padding: 20px; }
-            .dashboard, .filter-bar { grid-template-columns: 1fr; flex-direction: column; }
-            .container { padding: 20px; }
+        .status-msg.success {
+            display: block;
+            border-color: var(--accent-teal);
+            color: var(--accent-teal);
+            background: rgba(92, 158, 151, 0.1);
+        }
+        .status-msg.error {
+            display: block;
+            border-color: var(--accent-rose);
+            color: var(--accent-rose);
+            background: rgba(194, 109, 109, 0.1);
+        }
+        .status-msg.warn {
+            display: block;
+            border-color: var(--accent-sand);
+            color: var(--accent-sand);
+            background: rgba(227, 192, 141, 0.1);
         }
 
+        /* ========================================
+           響應式
+           ======================================== */
+        @media (max-width: 800px) {
+            .dashboard { grid-template-columns: 1fr; gap: 10px; }
+            .export-panel { grid-template-columns: 1fr; }
+            .filter-bar { flex-direction: column; }
+            .filter-bar select { width: 100%; }
+        }
+
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: var(--bg-page); }
+        ::-webkit-scrollbar-thumb { background: var(--border-hard); }
+        ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
     </style>
 </head>
 <body>
 
-<div class="sidebar">
-    <div class="sidebar-brand">SYS.WORKFLOWS_</div>
-    
-    <a href="#" id="link-hospice" class="menu-link active" onclick="showSection('hospice')">
-        <svg class="icon-raw" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12h6M12 9v6"/></svg>
-        安寧核對
-    </a>
-    <a href="#" id="link-birthday" class="menu-link" onclick="showSection('birthday')">
-        <svg class="icon-raw" viewBox="0 0 24 24"><rect x="3" y="8" width="18" height="12"/><path d="M12 8v-4M9 4h6"/></svg>
-        慶生名單
-    </a>
-    <a href="#" id="link-directory" class="menu-link" onclick="showSection('directory')">
-        <svg class="icon-raw" viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16"/><path d="M6 10h12M6 14h8"/></svg>
-        總名冊速查
-    </a>
+<svg style="display:none;">
+    <symbol id="icon-menu" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></symbol>
+    <symbol id="icon-close" viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></symbol>
+    <symbol id="icon-shield" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></symbol>
+    <symbol id="icon-cake" viewBox="0 0 24 24"><rect x="3" y="8" width="18" height="4" rx="1" ry="1"/><path d="M12 8v-3"/><path d="M19 12v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-7"/><path d="M7 5h.01"/><path d="M12 5h.01"/><path d="M17 5h.01"/></symbol>
+    <symbol id="icon-card" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><path d="M8 14h.01"/><path d="M12 14h.01"/><path d="M16 14h.01"/><path d="M8 18h.01"/><path d="M12 18h.01"/><path d="M16 18h.01"/></symbol>
+    <symbol id="icon-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></symbol>
+    <symbol id="icon-terminal" viewBox="0 0 24 24"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></symbol>
+    <symbol id="icon-file" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></symbol>
+    <symbol id="icon-box" viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></symbol>
+</svg>
+
+<button class="hamburger" onclick="toggleNav()">
+    <svg class="icon"><use href="#icon-menu"></use></svg>
+</button>
+
+<div id="sidebarOverlay" class="sidebar-overlay" onclick="closeNav()"></div>
+
+<div id="mySidebar" class="sidebar">
+    <div class="sidebar-header">
+        <span class="sidebar-brand">SYSTEM.CORE</span>
+        <button class="closebtn" onclick="closeNav()">
+            <svg class="icon"><use href="#icon-close"></use></svg>
+        </button>
+    </div>
+    <nav class="sidebar-nav">
+        <a href="#" id="link-hospice" class="menu-link active" onclick="showSection('hospice')">
+            <svg class="icon"><use href="#icon-shield"></use></svg> 榮民安寧核對
+        </a>
+        <a href="#" id="link-birthday" class="menu-link" onclick="showSection('birthday')">
+            <svg class="icon"><use href="#icon-cake"></use></svg> 當月慶生名單
+        </a>
+        <a href="#" id="link-directory" class="menu-link" onclick="showSection('directory')">
+            <svg class="icon"><use href="#icon-card"></use></svg> 總名冊速查
+        </a>
+    </nav>
 </div>
 
 <div id="main" class="main-content">
 
-    <div id="sec-hospice" class="container">
-        <h2 class="section-title">榮民安寧報表核對</h2>
-        <div class="control-panel">
+    <div id="sec-hospice" class="container active">
+        <h2 class="section-title c-main">
+            <svg class="icon" style="width: 32px; height: 32px;"><use href="#icon-shield"></use></svg> 
+            榮民安寧資料解析
+        </h2>
+        <div class="control-panel sketch-box">
             <div class="row-group">
-                <label>[ DATA_INPUT ] 貼上當月純榮民名單或系統備份檔</label>
-                <textarea id="vetData" placeholder="Paste data here..."></textarea>
+                <label>
+                    <svg class="icon"><use href="#icon-terminal"></use></svg>
+                    輸入純榮民原始數據 (支援系統電子備份檔還原)
+                </label>
+                <textarea id="vetData" class="sketch-box" placeholder="DATA_INPUT >_ 貼上當月純榮民名單資料（包含標題如：202602 身分別報表）..."></textarea>
             </div>
-            <button class="btn btn-primary btn-full" onclick="processVetData()">
-                <svg class="icon-raw" viewBox="0 0 24 24" style="width:18px;height:18px;"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
-                EXECUTE_MATCH
+            <button class="btn btn-main btn-full" onclick="processVetData()">
+                <svg class="icon"><use href="#icon-search"></use></svg> 執行資料對比與解析
             </button>
         </div>
 
-        <div id="vetDashboard" class="dashboard">
-            <div class="dash-card">
-                <div class="dash-item"><span>[A] 月底總床數</span> <span id="stat-A" class="dash-highlight">0</span></div>
-                <div class="dash-item"><span>[C] 佔床人數 (扣住院)</span> <span id="stat-C" class="dash-highlight">0</span></div>
-                <div class="dash-item"><span>[D] 預立安寧註記</span> <span id="stat-D" class="dash-highlight">0</span></div>
-                <div class="dash-item"><span>[E] 簽署 DNR</span> <span id="stat-E" class="dash-highlight">0</span></div>
-                <div class="dash-item"><span>[I] 新入住 (<30天)</span> <span id="stat-I" class="dash-highlight">0</span></div>
+        <div id="vetDashboard" class="dashboard sketch-box">
+            <div>
+                <div class="dash-item">總床數 (月基準) <span id="stat-A" class="dash-highlight">0</span></div>
+                <div class="dash-item">榮民佔床數 (扣除住院) <span id="stat-C" class="dash-highlight">0</span></div>
+                <div class="dash-item">預立安寧註記 <span id="stat-D" class="dash-highlight">0</span></div>
+                <div class="dash-item">簽署 DNR 協議 <span id="stat-E" class="dash-highlight">0</span></div>
+                <div class="dash-item">新入住榮民 (30日區間) <span id="stat-I" class="dash-highlight">0</span></div>
             </div>
-            <div class="dash-card">
-                <div class="dash-item" style="color: var(--accent-yellow);"><span>[J] 入住單身榮民數</span> <input type="number" id="input-J" class="vet-input" value="0" oninput="calculateVetStats()"></div>
-                <div class="dash-item" style="color: var(--accent-yellow);"><span>[K] 單身榮民預立安寧</span> <input type="number" id="input-K" class="vet-input" value="0" oninput="calculateVetStats()"></div>
-                <div class="dash-item"><span>[L] 單身安寧比例 (K/J)</span> <span id="stat-L" class="dash-highlight">0%</span></div>
-                <div class="dash-item"><span>[M] 辨識評估人數 (同C)</span> <span id="stat-M" class="dash-highlight">0</span></div>
+            <div>
+                <div class="dash-item c-teal">入住單身榮民數 <input type="number" id="input-J" class="vet-input sketch-box" value="0" oninput="calculateVetStats()"></div>
+                <div class="dash-item c-teal">單身榮民預立安寧 <input type="number" id="input-K" class="vet-input sketch-box" value="0" oninput="calculateVetStats()"></div>
+                <div class="dash-item">單身安寧比例 <span id="stat-L" class="dash-highlight c-sand">0.0%</span></div>
+                <div class="dash-item">執行辨識評估數 <span id="stat-M" class="dash-highlight">0</span></div>
                 
-                <div style="display:flex; gap:16px; margin-top:24px;">
-                    <button class="btn btn-outline" style="flex:1; font-size: 13px;" onclick="exportVetWord()">EXPORT_DOC</button>
-                    <button class="btn btn-accent" style="flex:1; font-size: 13px;" onclick="exportVetExcel()">BACKUP_XLS</button>
+                <div class="dash-actions">
+                    <button class="btn btn-sand" onclick="exportVetWord()">列印紙本</button>
+                    <button class="btn btn-teal" onclick="exportVetExcel()">封裝備份</button>
                 </div>
             </div>
         </div>
 
-        <div style="overflow-x: auto;">
-            <table id="vetTable" style="display: none;">
+        <div class="table-wrapper" id="vetTableWrapper" style="display: none;">
+            <table id="vetTable">
                 <thead>
                     <tr>
-                        <th>STATUS</th><th>BED</th><th>NAME</th><th>DAYS</th>
-                        <th style="color: var(--accent-orange);">DNR</th>
-                        <th style="color: var(--accent-green);">安寧</th>
-                        <th style="color: var(--text-dim);">無</th>
+                        <th>狀態標籤</th><th>區塊定位</th><th>住民姓名</th><th>入住天數</th>
+                        <th class="th-dnr">DNR</th>
+                        <th class="th-hospice">安寧</th>
+                        <th class="th-none">無</th>
                     </tr>
                 </thead>
                 <tbody id="vetBody"></tbody>
@@ -436,35 +528,47 @@
         </div>
     </div>
 
-    <div id="sec-birthday" class="container" style="display: none;">
-        <h2 class="section-title">每月慶生報表引擎</h2>
-        <div class="control-panel">
+    <div id="sec-birthday" class="container">
+        <h2 class="section-title c-teal">
+            <svg class="icon" style="width: 32px; height: 32px;"><use href="#icon-cake"></use></svg> 
+            慶生資料批次處理
+        </h2>
+        <div class="control-panel sketch-box">
             <div class="row-group">
-                <label>[ PARAM_01 ] 設定月份</label>
-                <input type="number" id="monthInput" value="4" style="width: 150px;">
+                <label>目標分析月份</label>
+                <input type="number" id="monthInput" class="sketch-box" value="4" style="width: 120px;">
             </div>
             <div class="row-group">
-                <label>[ PARAM_02 ] 貼上 Excel 總名冊</label>
-                <textarea id="excelData" placeholder="Raw excel data..."></textarea>
+                <label>載入全區總名冊 (Excel 格式)</label>
+                <textarea id="excelData" class="sketch-box" placeholder="DATA_INPUT >_ 直接從 Excel 全選總名冊貼上，系統將自動建置關聯數據庫..."></textarea>
             </div>
-            <button class="btn btn-primary btn-full" onclick="processData()">
-                <svg class="icon-raw" viewBox="0 0 24 24" style="width:18px;height:18px;"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-                COMPILE_DATA
+            <button class="btn btn-teal btn-full" onclick="processData()">
+                <svg class="icon"><use href="#icon-terminal"></use></svg> 建立壽星索引庫
             </button>
             <div id="statusMsg" class="status-msg"></div>
         </div>
+        
         <div id="exportArea" class="export-panel">
-            <button class="btn btn-outline" onclick="exportDoc1()">[1] 送禮對照</button>
-            <button class="btn btn-outline" onclick="exportCsv2()">[2] 系統名單 CSV</button>
-            <button class="btn btn-accent" onclick="exportDoc3()">[3] 單位物資分配</button>
+            <button class="btn btn-sand" onclick="exportDoc1()">
+                <svg class="icon"><use href="#icon-file"></use></svg> 送禮對照表
+            </button>
+            <button class="btn btn-main" onclick="exportCsv2()">
+                <svg class="icon"><use href="#icon-file"></use></svg> 系統源碼 CSV
+            </button>
+            <button class="btn btn-rose" onclick="exportDoc3()">
+                <svg class="icon"><use href="#icon-box"></use></svg> 單位物資分配
+            </button>
         </div>
     </div>
 
-    <div id="sec-directory" class="container" style="display: none;">
-        <h2 class="section-title">住民資料快搜</h2>
+    <div id="sec-directory" class="container">
+        <h2 class="section-title c-sand">
+            <svg class="icon" style="width: 32px; height: 32px;"><use href="#icon-card"></use></svg> 
+            全區住民資料庫
+        </h2>
         <div class="filter-bar">
-            <select id="unitFilter" onchange="renderDirectory()">
-                <option value="">[ ALL_UNITS ]</option>
+            <select id="unitFilter" class="sketch-box" onchange="renderDirectory()">
+                <option value="">[ 全區檢視 ]</option>
                 <option value="H1">H1 樂齡</option>
                 <option value="H2">H2 溫馨</option>
                 <option value="H3">H3 自強</option>
@@ -472,36 +576,49 @@
                 <option value="H5">H5 長壽</option>
                 <option value="H6">H6 樂活</option>
             </select>
-            <input type="text" id="searchInput" placeholder="Search name..." onkeyup="renderDirectory()">
+            <input type="text" id="searchInput" class="sketch-box" placeholder="QUERY_STRING >_ 輸入檢索字元..." onkeyup="renderDirectory()">
         </div>
-        <div style="overflow-x: auto;">
+        
+        <div class="table-wrapper">
             <table>
                 <thead>
-                    <tr><th>UNIT</th><th>BED</th><th>NAME</th><th>AGE</th><th>GENDER</th></tr>
+                    <tr><th>單位節點</th><th>區塊座標</th><th>識別名稱</th><th>運作年期</th><th>性別</th></tr>
                 </thead>
                 <tbody id="directoryBody">
-                    <tr><td colspan="5" style="color: var(--text-dim); padding: 30px; text-align: center; border:none;">No data. Please compile directory first.</td></tr>
+                    <tr><td colspan="5" style="color: var(--text-muted); padding: 40px; text-align: center;">SYSTEM_WAITING > 請先於「慶生處理區」載入全區名冊建立本地資料庫。</td></tr>
                 </tbody>
             </table>
         </div>
-        <div id="dirCount" style="margin-top: 20px; text-align: right; color: var(--accent-yellow); font-weight: 700;"></div>
+        <div id="dirCount" class="dir-count"></div>
     </div>
 
 </div>
 
 <script>
     // ==========================================
-    // UI 介面控制
+    // UI 控制與互動
     // ==========================================
+    function toggleNav() {
+        const sidebar = document.getElementById('mySidebar');
+        const isOpen = sidebar.classList.contains('open');
+        if (isOpen) closeNav(); else openNav();
+    }
+    function openNav() {
+        document.getElementById('mySidebar').classList.add('open');
+        document.getElementById('sidebarOverlay').classList.add('open');
+    }
+    function closeNav() {
+        document.getElementById('mySidebar').classList.remove('open');
+        document.getElementById('sidebarOverlay').classList.remove('open');
+    }
 
     function showSection(sectionId) {
-        const sections = ['hospice', 'birthday', 'directory'];
-        sections.forEach(id => {
-            document.getElementById('sec-' + id).style.display = (id === sectionId) ? 'block' : 'none';
-        });
+        document.querySelectorAll('.container').forEach(el => el.classList.remove('active'));
+        document.getElementById('sec-' + sectionId).classList.add('active');
 
         document.querySelectorAll('.sidebar a.menu-link').forEach(link => link.classList.remove('active'));
         document.getElementById('link-' + sectionId).classList.add('active');
+        closeNav();
     }
 
     // ==========================================
@@ -514,13 +631,10 @@
 
     const currentYear = new Date().getFullYear();
     const rocCurrentYear = currentYear - 1911;
-    const unitNames = {
-        'H1': '樂齡小屋', 'H2': '溫馨小屋', 'H3': '自強村',
-        'H4': '幸福村', 'H5': '長壽村', 'H6': '樂活村'
-    };
+    const unitNames = { 'H1': '樂齡', 'H2': '溫馨', 'H3': '自強', 'H4': '幸福', 'H5': '長壽', 'H6': '樂活' };
 
     window.addEventListener('load', function() {
-        const savedData = localStorage.getItem('nursingHomeDirectory');
+        const savedData = localStorage.getItem('nh_core_directory');
         if (savedData) {
             allResidents = JSON.parse(savedData);
             renderDirectory();
@@ -537,18 +651,16 @@
     }
 
     // ==========================================
-    // 模塊一：榮民安寧報表自動核對
+    // 模塊一：榮民安寧邏輯
     // ==========================================
-
     function getSavedVetStatus() {
-        const saved = localStorage.getItem('vetStatusMemory');
+        const saved = localStorage.getItem('nh_vet_memory');
         return saved ? JSON.parse(saved) : {};
     }
-
     function updateVetStatus(name, status) {
         const memory = getSavedVetStatus();
         memory[name] = status;
-        localStorage.setItem('vetStatusMemory', JSON.stringify(memory));
+        localStorage.setItem('nh_vet_memory', JSON.stringify(memory));
         const vet = currentVets.find(v => v.name === name);
         if (vet) vet.status = status;
         calculateVetStats();
@@ -556,7 +668,7 @@
 
     function processVetData() {
         const text = document.getElementById('vetData').value;
-        if (!text.trim()) { alert('ERROR: NO DATA FOUND.'); return; }
+        if (!text.trim()) { alert('[ ERR ] 請先輸入數據。'); return; }
 
         let memory = getSavedVetStatus();
         currentVets = [];
@@ -564,10 +676,10 @@
 
         reportTitleStr = lines[0].trim();
         if (reportTitleStr.includes('序號') || reportTitleStr.includes('姓名') || reportTitleStr.length > 20) {
-            reportTitleStr = `${new Date().getFullYear()}${String(new Date().getMonth() + 1).padStart(2, '0')} 身分別報表`;
+            reportTitleStr = `${new Date().getFullYear()}${String(new Date().getMonth() + 1).padStart(2, '0')} 核心報表`;
         }
 
-        const isBackupFile = lines.some(l => l.includes('DNR') && l.includes('安寧') && l.includes('無') && l.includes('狀態'));
+        const isBackupFile = lines.some(l => l.includes('DNR') && l.includes('安寧') && l.includes('狀態'));
 
         for (let i = 0; i < lines.length; i++) {
             const line = lines[i].trim();
@@ -585,13 +697,9 @@
                 else if (cols[7] && cols[7].trim() === 'O') restoredStatus = '無';
                 if (restoredStatus) memory[name] = restoredStatus;
             } else if (cols.length >= 4) {
-                bldg = (cols[1] || '').trim();
-                bed = (cols[2] || '').trim();
-                name = (cols[3] || '').trim();
+                bldg = (cols[1] || '').trim(); bed = (cols[2] || '').trim(); name = (cols[3] || '').trim();
                 days = cols[6] ? parseInt(cols[6].trim(), 10) : 999;
-            } else {
-                continue;
-            }
+            } else { continue; }
 
             if (!name) continue;
 
@@ -602,15 +710,15 @@
             currentVets.push({ bldg, bed, name, days: isNaN(days) ? '-' : days, isHospitalized, isNew, status });
         }
 
-        if (isBackupFile) localStorage.setItem('vetStatusMemory', JSON.stringify(memory));
+        if (isBackupFile) localStorage.setItem('nh_vet_memory', JSON.stringify(memory));
 
         renderVetTable();
         calculateVetStats();
 
         document.getElementById('vetDashboard').classList.add('visible');
-        document.getElementById('vetTable').style.display = 'table';
+        document.getElementById('vetTableWrapper').style.display = 'block';
 
-        if (isBackupFile) alert('SYSTEM MSG: Backup detected. DNR and Hospice data restored.');
+        if (isBackupFile) alert('[ SYS_RESTORE ] 偵測到備份封裝檔，狀態記憶已還原。');
     }
 
     function renderVetTable() {
@@ -619,7 +727,7 @@
         currentVets.forEach(vet => {
             const tr = document.createElement('tr');
             let tags = '';
-            if (vet.isHospitalized) tags += '<span class="tag tag-hosp">住院</span> ';
+            if (vet.isHospitalized) tags += '<span class="tag tag-hosp">住院(不計)</span>';
             if (vet.isNew) tags += '<span class="tag tag-new">NEW</span>';
             
             if (vet.isHospitalized) tr.style.opacity = '0.5';
@@ -627,9 +735,9 @@
             const safeName = vet.name.replace(/'/g, "\\'");
             tr.innerHTML = `
                 <td>${tags}</td>
-                <td style="font-weight: 700; color: var(--accent-yellow);">${vet.bldg}-${vet.bed}</td>
-                <td style="font-size: 16px; font-weight: 700;">${vet.name}</td>
-                <td>${vet.days}</td>
+                <td style="font-family: 'JetBrains Mono', monospace; color: var(--accent-sand);">${vet.bldg}-${vet.bed}</td>
+                <td style="font-weight: 700; font-size: 16px;">${vet.name}</td>
+                <td style="font-family: 'JetBrains Mono', monospace;">${vet.days}</td>
                 <td><input type="radio" name="status_${safeName}" value="DNR" ${vet.status === 'DNR' ? 'checked' : ''} onchange="updateVetStatus('${safeName}', 'DNR')"></td>
                 <td><input type="radio" name="status_${safeName}" value="安寧" ${vet.status === '安寧' ? 'checked' : ''} onchange="updateVetStatus('${safeName}', '安寧')"></td>
                 <td><input type="radio" name="status_${safeName}" value="無" ${vet.status === '無' ? 'checked' : ''} onchange="updateVetStatus('${safeName}', '無')"></td>
@@ -639,60 +747,41 @@
     }
 
     function calculateVetStats() {
-        const statA = currentVets.length;
         const validVets = currentVets.filter(v => !v.isHospitalized);
-        const statC = validVets.length;
-        const statD = validVets.filter(v => v.status === '安寧').length;
-        const statE = validVets.filter(v => v.status === 'DNR').length;
-        const statI = currentVets.filter(v => v.isNew).length;
-
         const inputJ = parseInt(document.getElementById('input-J').value) || 0;
         const inputK = parseInt(document.getElementById('input-K').value) || 0;
-        const statL = inputJ > 0 ? ((inputK / inputJ) * 100).toFixed(1) + '%' : '0.0%';
 
-        document.getElementById('stat-A').textContent = statA;
-        document.getElementById('stat-C').textContent = statC;
-        document.getElementById('stat-D').textContent = statD;
-        document.getElementById('stat-E').textContent = statE;
-        document.getElementById('stat-I').textContent = statI;
-        document.getElementById('stat-L').textContent = statL;
-        document.getElementById('stat-M').textContent = statC;
+        document.getElementById('stat-A').textContent = currentVets.length;
+        document.getElementById('stat-C').textContent = validVets.length;
+        document.getElementById('stat-D').textContent = validVets.filter(v => v.status === '安寧').length;
+        document.getElementById('stat-E').textContent = validVets.filter(v => v.status === 'DNR').length;
+        document.getElementById('stat-I').textContent = currentVets.filter(v => v.isNew).length;
+        document.getElementById('stat-L').textContent = inputJ > 0 ? ((inputK / inputJ) * 100).toFixed(1) + '%' : '0.0%';
+        document.getElementById('stat-M').textContent = validVets.length;
     }
 
     function exportVetExcel() {
         let csvContent = '狀態\t樓館\t床位\t姓名\t入住天數\tDNR\t安寧\t無\n';
         currentVets.forEach(v => {
             const statusTag = v.isHospitalized ? '住院' : (v.isNew ? '新入住' : '');
-            const dnrMark = v.status === 'DNR' ? 'O' : '';
-            const hospiceMark = v.status === '安寧' ? 'O' : '';
-            const noneMark = v.status === '無' ? 'O' : '';
-            csvContent += `${statusTag}\t${v.bldg}\t${v.bed}\t${v.name}\t${v.days}\t${dnrMark}\t${hospiceMark}\t${noneMark}\n`;
+            csvContent += `${statusTag}\t${v.bldg}\t${v.bed}\t${v.name}\t${v.days}\t${v.status==='DNR'?'O':''}\t${v.status==='安寧'?'O':''}\t${v.status==='無'?'O':''}\n`;
         });
         const blob = new Blob(['\ufeff' + csvContent], { type: 'application/vnd.ms-excel;charset=utf-8;' });
-        const link = document.createElement('a');
-        link.href = URL.createObjectURL(blob);
-        link.download = `${reportTitleStr}_系統備份檔.xls`;
-        link.click();
+        const link = document.createElement('a'); link.href = URL.createObjectURL(blob);
+        link.download = `${reportTitleStr}_SYS_BACKUP.xls`; link.click();
     }
 
     function exportVetWord() {
         let html = `<p style="text-align:center; font-size: 18pt; font-weight:bold; margin-bottom:15px;">${reportTitleStr}</p>`;
         html += `<table border="1" cellspacing="0" cellpadding="5" style="border-collapse: collapse; width: 100%; text-align: center; font-family: '標楷體', serif; font-size: 12pt;">
-                 <tr><th>序號</th><th>樓館</th><th>床位</th><th>姓名</th><th>入住天數</th><th>DNR</th><th>安寧</th><th>無</th><th>備註</th></tr>`;
-
+                 <tr><th>序號</th><th>樓館</th><th>床位</th><th>姓名</th><th>天數</th><th>DNR</th><th>安寧</th><th>無</th><th>備註</th></tr>`;
         currentVets.forEach((v, index) => {
-            const dnrMark = v.status === 'DNR' ? '✓' : '';
-            const hospiceMark = v.status === '安寧' ? '✓' : '';
-            const noneMark = v.status === '無' ? '✓' : '';
-            const remarks = v.isHospitalized ? '住院' : (v.isNew ? 'New' : '');
-
             html += `<tr>
-                <td>${index + 1}</td><td>${v.bldg}</td><td>${v.bed}</td>
-                <td style="font-weight: bold;">${v.name}</td><td>${v.days}</td>
-                <td style="font-size: 14pt; font-weight: bold;">${dnrMark}</td>
-                <td style="font-size: 14pt; font-weight: bold;">${hospiceMark}</td>
-                <td style="font-size: 14pt; font-weight: bold;">${noneMark}</td>
-                <td style="color: red;">${remarks}</td>
+                <td>${index + 1}</td><td>${v.bldg}</td><td>${v.bed}</td><td style="font-weight: bold;">${v.name}</td><td>${v.days}</td>
+                <td style="font-size: 14pt;">${v.status === 'DNR' ? '✓' : ''}</td>
+                <td style="font-size: 14pt;">${v.status === '安寧' ? '✓' : ''}</td>
+                <td style="font-size: 14pt;">${v.status === '無' ? '✓' : ''}</td>
+                <td style="color: #4a4a4a;">${v.isHospitalized ? '住院' : (v.isNew ? 'NEW' : '')}</td>
             </tr>`;
         });
         html += '</table>';
@@ -700,28 +789,22 @@
     }
 
     // ==========================================
-    // 模塊二：慶生報表處理邏輯
+    // 模塊二：慶生報表
     // ==========================================
-
     function processData() {
         const text = document.getElementById('excelData').value;
         const targetMonth = parseInt(document.getElementById('monthInput').value, 10);
-        globalData = [];
-        allResidents = [];
+        globalData = []; allResidents = [];
 
-        if (!text.trim()) { alert('ERROR: DATA REQUIRED.'); return; }
+        if (!text.trim()) { alert('[ ERR ] 無效數據輸入。'); return; }
 
         const lines = text.split('\n');
         for (let i = 0; i < lines.length; i++) {
-            const line = lines[i].trim();
-            if (!line) continue;
-            const cols = line.split('\t');
+            const cols = lines[i].trim().split('\t');
             if (cols.length < 4) continue;
 
-            const room = (cols[0] || '').trim();
-            const name = (cols[1] || '').trim();
-            const rawGender = (cols[2] || '').trim();
-            const birthdayStr = (cols[3] || '').trim();
+            const room = (cols[0] || '').trim(); const name = (cols[1] || '').trim();
+            const rawGender = (cols[2] || '').trim(); const birthdayStr = (cols[3] || '').trim();
 
             if (name === '住民姓名' || birthdayStr === '出生日期') continue;
 
@@ -745,27 +828,28 @@
         }
 
         if (allResidents.length > 0) {
-            localStorage.setItem('nursingHomeDirectory', JSON.stringify(allResidents));
+            localStorage.setItem('nh_core_directory', JSON.stringify(allResidents));
             renderDirectory();
         }
 
         const msgEl = document.getElementById('statusMsg');
+        msgEl.className = 'status-msg';
+        
         if (globalData.length > 0) {
-            msgEl.textContent = `STATUS: SUCCESS. Extracted ${globalData.length} records.`;
-            msgEl.className = 'status-msg success';
+            msgEl.textContent = `[ OK ] 系統已建置 ${globalData.length} 筆目標月份壽星檔案。`;
+            msgEl.classList.add('success');
             document.getElementById('exportArea').style.display = 'grid';
         } else {
             msgEl.textContent = allResidents.length > 0
-                ? `STATUS: No birthday matches for month ${targetMonth}.`
-                : 'STATUS: ERROR. Invalid format.';
-            msgEl.className = 'status-msg error';
+                ? `[ WARN ] 資料庫建置完畢 (${allResidents.length} 筆)，但指定月份無匹配資料。`
+                : '[ ERR ] 資料解析失敗，請確認陣列格式。';
+            msgEl.classList.add(globalData.length === 0 && allResidents.length > 0 ? 'warn' : 'error');
         }
     }
 
     // ==========================================
-    // 模塊三：住民速查處理邏輯
+    // 模塊三：住民速查
     // ==========================================
-
     function renderDirectory() {
         const tbody = document.getElementById('directoryBody');
         const unitFilter = document.getElementById('unitFilter').value;
@@ -779,46 +863,42 @@
             count++;
             const tr = document.createElement('tr');
             tr.innerHTML = `
-                <td style="color: var(--text-dim);">${person.unitCode}</td>
-                <td style="font-weight: 700; color: var(--accent-yellow);">${person.room}</td>
-                <td style="font-weight: 700; font-size: 16px;">${person.name}</td>
-                <td style="color: var(--accent-orange); font-weight: 700;">${person.age}</td>
-                <td>${person.gender}</td>
+                <td style="color: var(--text-muted); font-weight: 700;">${person.unitCode}</td>
+                <td style="font-family: 'JetBrains Mono', monospace; color: var(--accent-sand);">${person.room}</td>
+                <td style="font-weight: 900; font-size: 16px; color: var(--text-primary);">${person.name}</td>
+                <td style="font-family: 'JetBrains Mono', monospace; color: var(--accent-teal);">${person.age} YRS</td>
+                <td style="color: var(--text-secondary);">${person.gender}</td>
             `;
             tbody.appendChild(tr);
         });
 
-        document.getElementById('dirCount').textContent = `TOTAL MATCHES: ${count}`;
+        document.getElementById('dirCount').textContent = `INDEXED_RECORDS : ${count}`;
     }
 
     // ==========================================
-    // 慶生報表匯出功能
+    // 匯出功能
     // ==========================================
-
     function exportDoc1() {
         const month = document.getElementById('monthInput').value.padStart(2, '0');
-        let html = `<p style="text-align:center; font-size: 16pt; font-weight:bold; margin-bottom:10px;">臺中榮總嘉義分院附設護理之家${rocCurrentYear}年${month}月壽星</p>`;
-        html += `<table border="1" cellspacing="0" cellpadding="5" style="border-collapse: collapse; width: 100%; text-align: center; font-family: '標楷體', serif; font-size: 12pt;"><tr><th>編號</th><th>床位</th><th>姓名</th><th>出生年月日</th><th>年齡</th><th>性別</th><th>備註</th></tr>`;
+        let html = `<p style="text-align:center; font-size: 16pt; font-weight:bold; margin-bottom:10px;">${rocCurrentYear}年${month}月 壽星對照清單</p>`;
+        html += `<table border="1" cellspacing="0" cellpadding="5" style="border-collapse: collapse; width: 100%; text-align: center; font-family: '標楷體', serif; font-size: 12pt;"><tr><th>編號</th><th>床位座標</th><th>識別名稱</th><th>出生代碼</th><th>運作年期</th><th>性別</th><th>註記</th></tr>`;
         globalData.forEach((d, i) => html += `<tr><td>${i + 1}</td><td>${d.room}</td><td>${d.name}</td><td>${d.rocDate}</td><td>${d.age}</td><td>${d.gender}</td><td></td></tr>`);
         html += '</table>';
-        downloadWord(html, `${rocCurrentYear}.${month}月-列印當天送禮名單對照`);
+        downloadWord(html, `V${rocCurrentYear}_${month}_GIFT_LIST`);
     }
 
     function exportCsv2() {
         const month = document.getElementById('monthInput').value.padStart(2, '0');
-        let csvContent = '床位,住民姓名,性別,出生日期,民國生日,年齡\n';
+        let csvContent = '床位,姓名,性別,出生碼,民國生日,年齡\n';
         globalData.forEach(d => csvContent += `${d.room},${d.name},${d.rawGender},${d.cleanBirthday},${d.rocDate},${d.age}\n`);
         const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' });
-        const link = document.createElement('a');
-        link.href = URL.createObjectURL(blob);
-        link.download = `${rocCurrentYear}.${month}月壽星名單.csv`;
-        link.click();
+        const link = document.createElement('a'); link.href = URL.createObjectURL(blob);
+        link.download = `V${rocCurrentYear}_${month}_SOURCE.csv`; link.click();
     }
 
     function exportDoc3() {
         const month = document.getElementById('monthInput').value.padStart(2, '0');
-        let html = '';
-        const grouped = {};
+        let html = ''; const grouped = {};
         const hcData = globalData.filter(d => d.unitCode.startsWith('H'));
         hcData.forEach(d => {
             if (!grouped[d.unitCode]) grouped[d.unitCode] = [];
@@ -827,12 +907,12 @@
 
         for (const [unit, people] of Object.entries(grouped)) {
             const unitName = unitNames[unit] || '';
-            html += `<p style="font-size: 14pt; font-weight: bold; margin-bottom: 5px;">${unit}${unitName}---${month}月壽星，每人兩瓶雞精</p>`;
+            html += `<p style="font-size: 14pt; font-weight: bold; margin-bottom: 5px;">[ ${unit} ${unitName} ] ${month}月物資分配 - 雞精 x2</p>`;
             html += `<table border="1" cellspacing="0" cellpadding="5" style="border-collapse: collapse; width: 100%; text-align: center; font-family: '標楷體', serif; font-size: 14pt; margin-bottom: 20px;">`;
             people.forEach(p => html += `<tr><td style="width: 50%;">${p.room}</td><td style="width: 50%;">${p.name}</td></tr>`);
             html += '</table>';
         }
-        downloadWord(html, `${rocCurrentYear}.${month}-給各單位雞精名單-印`);
+        downloadWord(html, `V${rocCurrentYear}_${month}_SUPPLY_LIST`);
     }
 </script>
 
