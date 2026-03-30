@@ -3,31 +3,34 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>護家名單系統 ｜ 手工鍛造版</title>
+    <title>護家名單系統</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
     <style>
         /* ========================================
            反主流美學 — 工業手作暗色系統 (無紫色)
            ======================================== */
+        /* ========================================
+           反主流美學 — 手造紙本文書系統
+           ======================================== */
         :root {
-            --bg-page: #1a1918;     /* 極深暖灰 */
-            --bg-card: #242220;     /* 卡片深灰 */
-            --bg-panel: #2e2c2a;    /* 面板底色 */
-            --bg-sidebar: #141312;  /* 側邊欄極暗色 */
+            --bg-page: #f4f1eb;     /* 手工紙米白背景 */
+            --bg-card: #fcfcfb;     /* 卡片底色 (略白一點增加層次) */
+            --bg-panel: #ebe6df;    /* 面板底色 (稍深的米色) */
+            --bg-sidebar: #e6e0d8;  /* 側邊欄底色 */
 
-            --text-primary: #f4f0ea; /* 暖米白，高對比不刺眼 */
-            --text-secondary: #a8a39a;
-            --text-muted: #736f68;
-            --text-inverse: #1a1918;
+            --text-primary: #3b3e43; /* 深鐵灰，主文字與邊框色 */
+            --text-secondary: #5e6368;
+            --text-muted: #8c9298;
+            --text-inverse: #fdfdfc; /* 反白文字 (在深色按鈕上使用) */
 
-            --accent-main: #e87a5d;  /* 赤陶橘 */
-            --accent-sand: #e3c08d;  /* 暖沙黃 */
-            --accent-teal: #5c9e97;  /* 復古綠 */
-            --accent-rose: #c26d6d;  /* 磚紅色 */
+            --accent-main: #d35f40;  /* 復古赤陶橘 */
+            --accent-sand: #b88645;  /* 復古大地棕 (為了在白底上有對比，調深了) */
+            --accent-teal: #3b7d75;  /* 老式打字機綠 */
+            --accent-rose: #a84c4c;  /* 磚紅色 */
 
-            --border-hard: #4a4742;  /* 硬邊框色 */
-            --border-focus: #e87a5d;
+            --border-hard: #3b3e43;  /* 硬邊框色 (對齊深鐵灰，創造鋼筆墨水感) */
+            --border-focus: #d35f40;
 
             --shadow-hard: 4px 4px 0px var(--border-hard);
             --shadow-hard-hover: 6px 6px 0px var(--accent-main);
@@ -550,13 +553,13 @@
         
         <div id="exportArea" class="export-panel">
             <button class="btn btn-sand" onclick="exportDoc1()">
-                <svg class="icon"><use href="#icon-file"></use></svg> 送禮對照表
+                <svg class="icon"><use href="#icon-file"></use></svg> 送禮名單對照(Word)
             </button>
             <button class="btn btn-main" onclick="exportCsv2()">
-                <svg class="icon"><use href="#icon-file"></use></svg> 系統源碼 CSV
+                <svg class="icon"><use href="#icon-file"></use></svg> 壽星名單(Excel)
             </button>
             <button class="btn btn-rose" onclick="exportDoc3()">
-                <svg class="icon"><use href="#icon-box"></use></svg> 單位物資分配
+                <svg class="icon"><use href="#icon-box"></use></svg> 單位雞精名單((Word))
             </button>
         </div>
     </div>
@@ -582,7 +585,7 @@
         <div class="table-wrapper">
             <table>
                 <thead>
-                    <tr><th>單位節點</th><th>區塊座標</th><th>識別名稱</th><th>運作年期</th><th>性別</th></tr>
+                    <tr><th>單位</th><th>床位</th><th>姓名</th><th>年齡</th><th>性別</th></tr>
                 </thead>
                 <tbody id="directoryBody">
                     <tr><td colspan="5" style="color: var(--text-muted); padding: 40px; text-align: center;">SYSTEM_WAITING > 請先於「慶生處理區」載入全區名冊建立本地資料庫。</td></tr>
