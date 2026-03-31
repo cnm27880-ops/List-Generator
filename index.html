@@ -982,19 +982,27 @@
             'H4': '幸福村', 'H5': '長壽村', 'H6': '樂活村'
         };
 
+        // 統一定義字體 (精準指定 "思源黑體 TW Regular")
+        const fontStyle = "font-family: '思源黑體 TW Regular'; mso-ascii-font-family: '思源黑體 TW Regular'; mso-hansi-font-family: '思源黑體 TW Regular';";
+
         for (const [unit, people] of Object.entries(grouped)) {
             const unitName = fullUnitNames[unit] || '';
             
-            // 標題修正：強制唯一指定 '思源黑體'，並加入 Word 專用字體宣告
-            html += `<p style="text-align: center; font-family: '思源黑體'; mso-ascii-font-family: '思源黑體'; mso-hansi-font-family: '思源黑體'; font-size: 20pt; font-weight: bold; margin-top: 15px; margin-bottom: 5px;">
+            // 標題修正：margin: 0cm 設定上下間距為 0 行
+            html += `<p style="text-align: center; ${fontStyle} font-size: 20pt; font-weight: bold; margin: 0cm; padding: 0cm; line-height: 1.0;">
                         ${unit} ${unitName}---<u>${month}月壽星，每人兩瓶雞精</u>
                      </p>`;
             
-            // 表格修正：cellpadding 改為 0，line-height 壓到 1.0
-            html += `<table border="1" align="center" cellspacing="0" cellpadding="0" style="border-collapse: collapse; width: 100%; text-align: center; font-family: '思源黑體'; mso-ascii-font-family: '思源黑體'; mso-hansi-font-family: '思源黑體'; font-size: 20pt; font-weight: bold; margin-bottom: 30px; line-height: 1.0;">`;
+            // 表格修正：width: 100% 寬度撐滿
+            html += `<table border="1" align="center" cellspacing="0" cellpadding="0" style="border-collapse: collapse; width: 100%; text-align: center; ${fontStyle} font-size: 20pt; font-weight: bold; margin-bottom: 20px;">`;
             
-            // 儲存格修正：padding: 0px 4px (上下為 0，左右留 4px 避免字貼在格線上)
-            people.forEach(p => html += `<tr><td style="width: 50%; padding: 0px 4px;">${p.room}</td><td style="width: 50%; padding: 0px 4px;">${p.name}</td></tr>`);
+            // 儲存格與列高修正：加入 height: 1.2cm 與 mso-height-rule: exactly (強制固定列高 1.2 公分)
+            people.forEach(p => {
+                html += `<tr style="height: 1.2cm; mso-height-rule: exactly;">
+                            <td style="width: 50%; padding: 0px;">${p.room}</td>
+                            <td style="width: 50%; padding: 0px;">${p.name}</td>
+                         </tr>`;
+            });
             
             html += '</table>';
         }
