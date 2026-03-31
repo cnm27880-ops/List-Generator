@@ -636,11 +636,44 @@
     const rocCurrentYear = currentYear - 1911;
     const unitNames = { 'H1': '樂齡', 'H2': '溫馨', 'H3': '自強', 'H4': '幸福', 'H5': '長壽', 'H6': '樂活' };
 
+    // ==========================================
+    // 頁面載入時：自動還原上次的所有資料
+    // ==========================================
     window.addEventListener('load', function() {
+        // 1. 恢復總名冊 (速查表)
         const savedData = localStorage.getItem('nh_core_directory');
         if (savedData) {
             allResidents = JSON.parse(savedData);
             renderDirectory();
+        }
+
+        // 2. 恢復安寧名單與儀表板
+        const savedVets = localStorage.getItem('nh_current_vets');
+        if (savedVets) {
+            currentVets = JSON.parse(savedVets);
+            reportTitleStr = localStorage.getItem('nh_vet_title') || '';
+            document.getElementById('input-J').value = localStorage.getItem('nh_vet_input_j') || '0';
+            document.getElementById('input-K').value = localStorage.getItem('nh_vet_input_k') || '0';
+            
+            renderVetTable();
+            calculateVetStats();
+            document.getElementById('vetDashboard').classList.add('visible');
+            document.getElementById('vetTableWrapper').style.display = 'block';
+        }
+
+        // 3. 恢復慶生名單與匯出按鈕
+        const savedBirthdays = localStorage.getItem('nh_global_data');
+        if (savedBirthdays) {
+            globalData = JSON.parse(savedBirthdays);
+            document.getElementById('monthInput').value = localStorage.getItem('nh_target_month') || (new Date().getMonth() + 1);
+            
+            if (globalData.length > 0) {
+                const msgEl = document.getElementById('statusMsg');
+                msgEl.textContent = `[ SYS_RECOVER ] 已恢復上次載入的 ${globalData.length} 筆壽星檔案。`;
+                msgEl.className = 'status-msg success';
+                msgEl.style.display = 'block';
+                document.getElementById('exportArea').style.display = 'grid';
+            }
         }
     });
 
@@ -679,6 +712,9 @@
         localStorage.setItem('nh_vet_memory', JSON.stringify(memory));
         const vet = currentVets.find(v => v.name === name);
         if (vet) vet.status = status;
+        
+        // 狀態改變時，也同步更新當前列表快取
+        localStorage.setItem('nh_current_vets', JSON.stringify(currentVets));
         calculateVetStats();
     }
 
@@ -728,6 +764,11 @@
 
         if (isBackupFile) localStorage.setItem('nh_vet_memory', JSON.stringify(memory));
 
+        // 【重點更新】儲存快取與清空輸入框
+        localStorage.setItem('nh_current_vets', JSON.stringify(currentVets));
+        localStorage.setItem('nh_vet_title', reportTitleStr);
+        document.getElementById('vetData').value = ''; // 自動清空
+
         renderVetTable();
         calculateVetStats();
 
@@ -766,6 +807,10 @@
         const validVets = currentVets.filter(v => !v.isHospitalized);
         const inputJ = parseInt(document.getElementById('input-J').value) || 0;
         const inputK = parseInt(document.getElementById('input-K').value) || 0;
+
+        // 【重點更新】儲存手動輸入的 J、K 值
+        localStorage.setItem('nh_vet_input_j', inputJ);
+        localStorage.setItem('nh_vet_input_k', inputK);
 
         document.getElementById('stat-A').textContent = currentVets.length;
         document.getElementById('stat-C').textContent = validVets.length;
@@ -852,14 +897,21 @@
         msgEl.className = 'status-msg';
         
         if (globalData.length > 0) {
+            // 【重點更新】儲存快取與清空輸入框
+            localStorage.setItem('nh_global_data', JSON.stringify(globalData));
+            localStorage.setItem('nh_target_month', targetMonth);
+            document.getElementById('excelData').value = ''; // 自動清空
+
             msgEl.textContent = `[ OK ] 系統已建置 ${globalData.length} 筆目標月份壽星檔案。`;
             msgEl.classList.add('success');
+            msgEl.style.display = 'block';
             document.getElementById('exportArea').style.display = 'grid';
         } else {
             msgEl.textContent = allResidents.length > 0
                 ? `[ WARN ] 資料庫建置完畢 (${allResidents.length} 筆)，但指定月份無匹配資料。`
                 : '[ ERR ] 資料解析失敗，請確認陣列格式。';
             msgEl.classList.add(globalData.length === 0 && allResidents.length > 0 ? 'warn' : 'error');
+            msgEl.style.display = 'block';
         }
     }
 
@@ -900,7 +952,7 @@
         html += `<table border="1" cellspacing="0" cellpadding="5" style="border-collapse: collapse; width: 100%; text-align: center; font-family: '標楷體', serif; font-size: 12pt;"><tr><th>編號</th><th>床位座標</th><th>識別名稱</th><th>出生代碼</th><th>運作年期</th><th>性別</th><th>註記</th></tr>`;
         globalData.forEach((d, i) => html += `<tr><td>${i + 1}</td><td>${d.room}</td><td>${d.name}</td><td>${d.rocDate}</td><td>${d.age}</td><td>${d.gender}</td><td></td></tr>`);
         html += '</table>';
-        downloadWord(html, `V${rocCurrentYear}_${month}_GIFT_LIST`);
+        downloadWord(html, `${rocCurrentYear}.${month}月-列印當天送禮名單對照`);
     }
 
     function exportCsv2() {
@@ -909,7 +961,7 @@
         globalData.forEach(d => csvContent += `${d.room},${d.name},${d.rawGender},${d.cleanBirthday},${d.rocDate},${d.age}\n`);
         const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' });
         const link = document.createElement('a'); link.href = URL.createObjectURL(blob);
-        link.download = `V${rocCurrentYear}_${month}_SOURCE.csv`; link.click();
+        link.download = `${rocCurrentYear}.${month}月-壽星名單.csv`; link.click();
     }
 
     function exportDoc3() {
