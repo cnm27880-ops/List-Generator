@@ -985,14 +985,17 @@
         for (const [unit, people] of Object.entries(grouped)) {
             const unitName = fullUnitNames[unit] || '';
             
-            // 標題：加入 text-align: center 置中，並在 ${unit} 和 ${unitName} 中間加上空格
-            html += `<p style="text-align: center; font-family: '思源黑體', 'Noto Sans TC', '微軟正黑體', sans-serif; font-size: 20pt; font-weight: bold; margin-top: 15px; margin-bottom: 5px;">
+            // 標題修正：強制唯一指定 '思源黑體'，並加入 Word 專用字體宣告
+            html += `<p style="text-align: center; font-family: '思源黑體'; mso-ascii-font-family: '思源黑體'; mso-hansi-font-family: '思源黑體'; font-size: 20pt; font-weight: bold; margin-top: 15px; margin-bottom: 5px;">
                         ${unit} ${unitName}---<u>${month}月壽星，每人兩瓶雞精</u>
                      </p>`;
             
-            // 表格：加入 align="center" 確保 Word 內置中，設定 cellpadding="2" 與較小的 padding 讓高度緊湊
-            html += `<table border="1" align="center" cellspacing="0" cellpadding="2" style="border-collapse: collapse; width: 70%; text-align: center; font-family: '思源黑體', 'Noto Sans TC', '微軟正黑體', sans-serif; font-size: 20pt; font-weight: bold; margin-bottom: 30px; line-height: 1.2;">`;
-            people.forEach(p => html += `<tr><td style="width: 50%; padding: 4px;">${p.room}</td><td style="width: 50%; padding: 4px;">${p.name}</td></tr>`);
+            // 表格修正：cellpadding 改為 0，line-height 壓到 1.0
+            html += `<table border="1" align="center" cellspacing="0" cellpadding="0" style="border-collapse: collapse; width: 100%; text-align: center; font-family: '思源黑體'; mso-ascii-font-family: '思源黑體'; mso-hansi-font-family: '思源黑體'; font-size: 20pt; font-weight: bold; margin-bottom: 30px; line-height: 1.0;">`;
+            
+            // 儲存格修正：padding: 0px 4px (上下為 0，左右留 4px 避免字貼在格線上)
+            people.forEach(p => html += `<tr><td style="width: 50%; padding: 0px 4px;">${p.room}</td><td style="width: 50%; padding: 0px 4px;">${p.name}</td></tr>`);
+            
             html += '</table>';
         }
         
