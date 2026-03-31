@@ -914,21 +914,38 @@
 
     function exportDoc3() {
         const month = document.getElementById('monthInput').value.padStart(2, '0');
-        let html = ''; const grouped = {};
+        let html = ''; 
+        const grouped = {};
         const hcData = globalData.filter(d => d.unitCode.startsWith('H'));
+        
+        // 將資料按單位分組
         hcData.forEach(d => {
             if (!grouped[d.unitCode]) grouped[d.unitCode] = [];
             grouped[d.unitCode].push(d);
         });
 
+        // 完整單位名稱對照表
+        const fullUnitNames = {
+            'H1': '樂齡小屋', 'H2': '溫馨小屋', 'H3': '自強村',
+            'H4': '幸福村', 'H5': '長壽村', 'H6': '樂活村'
+        };
+
         for (const [unit, people] of Object.entries(grouped)) {
-            const unitName = unitNames[unit] || '';
-            html += `<p style="font-size: 14pt; font-weight: bold; margin-bottom: 5px;">[ ${unit} ${unitName} ] ${month}月物資分配 - 雞精 x2</p>`;
-            html += `<table border="1" cellspacing="0" cellpadding="5" style="border-collapse: collapse; width: 100%; text-align: center; font-family: '標楷體', serif; font-size: 14pt; margin-bottom: 20px;">`;
-            people.forEach(p => html += `<tr><td style="width: 50%;">${p.room}</td><td style="width: 50%;">${p.name}</td></tr>`);
+            const unitName = fullUnitNames[unit] || '';
+            
+            // 標題：加入 text-align: center 置中，並在 ${unit} 和 ${unitName} 中間加上空格
+            html += `<p style="text-align: center; font-family: '思源黑體', 'Noto Sans TC', '微軟正黑體', sans-serif; font-size: 20pt; font-weight: bold; margin-top: 15px; margin-bottom: 5px;">
+                        ${unit} ${unitName}---<u>${month}月壽星，每人兩瓶雞精</u>
+                     </p>`;
+            
+            // 表格：加入 align="center" 確保 Word 內置中，設定 cellpadding="2" 與較小的 padding 讓高度緊湊
+            html += `<table border="1" align="center" cellspacing="0" cellpadding="2" style="border-collapse: collapse; width: 70%; text-align: center; font-family: '思源黑體', 'Noto Sans TC', '微軟正黑體', sans-serif; font-size: 20pt; font-weight: bold; margin-bottom: 30px; line-height: 1.2;">`;
+            people.forEach(p => html += `<tr><td style="width: 50%; padding: 4px;">${p.room}</td><td style="width: 50%; padding: 4px;">${p.name}</td></tr>`);
             html += '</table>';
         }
-        downloadWord(html, `V${rocCurrentYear}_${month}_SUPPLY_LIST`);
+        
+        // 檔名格式：115.03-給各單位雞精名單-印
+        downloadWord(html, `${rocCurrentYear}.${month}-給各單位雞精名單-印`);
     }
 </script>
 
