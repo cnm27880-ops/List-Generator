@@ -645,7 +645,20 @@
     });
 
     function downloadWord(htmlBody, fileName) {
-        const fullHtml = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="utf-8"><style>@page { size: A4 portrait; margin: 2.0cm; mso-page-orientation: portrait; } body { font-family: '標楷體', 'DFKai-SB', serif; font-size: 14pt; } p { margin: 0; padding: 0; line-height: 1.5; }</style></head><body>${htmlBody}</body></html>`;
+        const fullHtml = `
+        <html xmlns:o="urn:schemas-microsoft-com:office:office" 
+              xmlns:w="urn:schemas-microsoft-com:office:word" 
+              xmlns="http://www.w3.org/TR/REC-html40">
+        <head>
+            <meta charset="utf-8">
+            <style>
+                @page { size: A4 portrait; margin: 2.0cm; mso-page-orientation: portrait; } 
+                body { font-family: '標楷體', 'DFKai-SB', serif; font-size: 14pt; } 
+                p { margin: 0; padding: 0; line-height: 1.5; }
+            </style>
+        </head>
+        <body>${htmlBody}</body>
+        </html>`;
         const blob = new Blob(['\ufeff', fullHtml], { type: 'application/msword' });
         const link = document.createElement('a');
         link.href = URL.createObjectURL(blob);
