@@ -433,6 +433,120 @@
         ::-webkit-scrollbar-track { background: var(--bg-page); }
         ::-webkit-scrollbar-thumb { background: var(--border-hard); }
         ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+
+        /* ========================================
+           Toast 通知紙條
+           ======================================== */
+        .toast-container {
+            position: fixed; top: 24px; right: 24px; z-index: 9999;
+            display: flex; flex-direction: column; gap: 12px;
+            pointer-events: none;
+        }
+        .toast {
+            pointer-events: auto;
+            min-width: 300px; max-width: 420px;
+            padding: 16px 22px;
+            font-family: 'Noto Sans TC', sans-serif;
+            font-size: 15px; font-weight: 700;
+            border: 2px solid var(--border-hard);
+            border-radius: var(--radius-sketch);
+            box-shadow: var(--shadow-hard);
+            background: var(--bg-card);
+            color: var(--text-primary);
+            display: flex; align-items: center; gap: 12px;
+            transform: translateX(120%);
+            opacity: 0;
+            animation: toastSlideIn 0.4s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+        }
+        .toast.toast-exit {
+            animation: toastSlideOut 0.3s ease-in forwards;
+        }
+        .toast-error { border-color: var(--accent-rose); color: var(--accent-rose); }
+        .toast-success { border-color: var(--accent-teal); color: var(--accent-teal); }
+        .toast-warn { border-color: var(--accent-sand); color: var(--accent-sand); }
+        .toast-info { border-color: var(--accent-main); color: var(--accent-main); }
+
+        .toast-icon { flex-shrink: 0; font-size: 18px; }
+        .toast-msg { flex: 1; line-height: 1.5; }
+        .toast-close {
+            flex-shrink: 0; background: none; border: none;
+            color: inherit; cursor: pointer; font-size: 18px;
+            opacity: 0.6; transition: opacity 0.2s;
+        }
+        .toast-close:hover { opacity: 1; }
+
+        @keyframes toastSlideIn {
+            0% { transform: translateX(120%); opacity: 0; }
+            100% { transform: translateX(0); opacity: 1; }
+        }
+        @keyframes toastSlideOut {
+            0% { transform: translateX(0); opacity: 1; }
+            100% { transform: translateX(120%); opacity: 0; }
+        }
+
+        /* ========================================
+           可排序表格標題
+           ======================================== */
+        th.sortable {
+            cursor: pointer;
+            user-select: none;
+            position: relative;
+            transition: color var(--transition-snappy);
+        }
+        th.sortable:hover {
+            color: var(--accent-main);
+        }
+        th.sortable::after {
+            content: ' ⇅';
+            font-size: 12px;
+            opacity: 0.4;
+        }
+        th.sortable.sort-asc::after {
+            content: ' ↑';
+            opacity: 1;
+        }
+        th.sortable.sort-desc::after {
+            content: ' ↓';
+            opacity: 1;
+        }
+
+        /* ========================================
+           資料重置確認對話框
+           ======================================== */
+        .modal-overlay {
+            position: fixed; inset: 0; z-index: 9998;
+            background: rgba(10, 9, 8, 0.8);
+            display: flex; align-items: center; justify-content: center;
+            opacity: 0; visibility: hidden;
+            transition: opacity 0.3s ease;
+        }
+        .modal-overlay.open { opacity: 1; visibility: visible; }
+
+        .modal-box {
+            background: var(--bg-card);
+            border: 2px solid var(--border-hard);
+            border-radius: var(--radius-sketch);
+            box-shadow: 8px 8px 0px var(--border-hard);
+            padding: 40px;
+            max-width: 460px; width: 90%;
+            text-align: center;
+            transform: scale(0.9);
+            transition: transform 0.3s cubic-bezier(0.25, 1, 0.5, 1);
+        }
+        .modal-overlay.open .modal-box { transform: scale(1); }
+
+        .modal-title {
+            font-size: 20px; font-weight: 900;
+            color: var(--accent-rose);
+            margin-bottom: 16px;
+            letter-spacing: 1px;
+        }
+        .modal-desc {
+            font-size: 15px; color: var(--text-secondary);
+            line-height: 1.7; margin-bottom: 28px;
+        }
+        .modal-actions { display: flex; gap: 16px; justify-content: center; }
+        .modal-actions .btn { flex: 1; }
     </style>
 </head>
 <body>
@@ -448,6 +562,19 @@
     <symbol id="icon-file" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></symbol>
     <symbol id="icon-box" viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></symbol>
 </svg>
+
+<div class="toast-container" id="toastContainer"></div>
+
+<div class="modal-overlay" id="resetModal">
+    <div class="modal-box">
+        <div class="modal-title">SYSTEM_RESET</div>
+        <div class="modal-desc">確定要清除所有快取資料嗎？<br>此操作將重置榮民安寧、慶生名單與總名冊資料庫，<br>讓系統回到全新的狀態。</div>
+        <div class="modal-actions">
+            <button class="btn btn-rose" onclick="confirmReset()">確認重置</button>
+            <button class="btn" onclick="closeResetModal()">取消</button>
+        </div>
+    </div>
+</div>
 
 <button class="hamburger" onclick="toggleNav()">
     <svg class="icon"><use href="#icon-menu"></use></svg>
@@ -471,6 +598,10 @@
         </a>
         <a href="#" id="link-directory" class="menu-link" onclick="showSection('directory')">
             <svg class="icon"><use href="#icon-card"></use></svg> 總名冊速查
+        </a>
+        <hr style="border: none; border-top: 1px dashed var(--border-hard); margin: 12px 0;">
+        <a href="#" class="menu-link" onclick="openResetModal(); return false;" style="color: var(--accent-rose);">
+            <svg class="icon"><use href="#icon-close"></use></svg> 優雅換月（資料重置）
         </a>
     </nav>
 </div>
@@ -585,7 +716,13 @@
         <div class="table-wrapper">
             <table>
                 <thead>
-                    <tr><th>單位</th><th>床位</th><th>姓名</th><th>年齡</th><th>性別</th></tr>
+                    <tr>
+                        <th class="sortable" onclick="sortDirectory('unitCode')">單位</th>
+                        <th class="sortable" onclick="sortDirectory('room')">床位</th>
+                        <th>姓名</th>
+                        <th class="sortable" onclick="sortDirectory('age')">年齡</th>
+                        <th>性別</th>
+                    </tr>
                 </thead>
                 <tbody id="directoryBody">
                     <tr><td colspan="5" style="color: var(--text-muted); padding: 40px; text-align: center;">SYSTEM_WAITING > 請先於「慶生處理區」載入全區名冊建立本地資料庫。</td></tr>
@@ -598,6 +735,30 @@
 </div>
 
 <script>
+    // ==========================================
+    // Toast 通知系統
+    // ==========================================
+    function showToast(message, type = 'info', duration = 3500) {
+        const container = document.getElementById('toastContainer');
+        const toast = document.createElement('div');
+        toast.className = `toast toast-${type}`;
+
+        const icons = { error: '✕', success: '✓', warn: '⚠', info: '●' };
+        toast.innerHTML = `
+            <span class="toast-icon">${icons[type] || '●'}</span>
+            <span class="toast-msg">${message}</span>
+            <button class="toast-close" onclick="dismissToast(this.parentElement)">&times;</button>
+        `;
+        container.appendChild(toast);
+
+        setTimeout(() => dismissToast(toast), duration);
+    }
+    function dismissToast(toast) {
+        if (!toast || toast.classList.contains('toast-exit')) return;
+        toast.classList.add('toast-exit');
+        toast.addEventListener('animationend', () => toast.remove());
+    }
+
     // ==========================================
     // UI 控制與互動
     // ==========================================
@@ -720,7 +881,7 @@
 
     function processVetData() {
         const text = document.getElementById('vetData').value;
-        if (!text.trim()) { alert('[ ERR ] 請先輸入數據。'); return; }
+        if (!text.trim()) { showToast('請先輸入數據。', 'error'); return; }
 
         let memory = getSavedVetStatus();
         currentVets = [];
@@ -775,7 +936,7 @@
         document.getElementById('vetDashboard').classList.add('visible');
         document.getElementById('vetTableWrapper').style.display = 'block';
 
-        if (isBackupFile) alert('[ SYS_RESTORE ] 偵測到備份封裝檔，狀態記憶已還原。');
+        if (isBackupFile) showToast('偵測到備份封裝檔，狀態記憶已還原。', 'success', 4000);
     }
 
     function renderVetTable() {
@@ -857,7 +1018,7 @@
         const targetMonth = parseInt(document.getElementById('monthInput').value, 10);
         globalData = []; allResidents = [];
 
-        if (!text.trim()) { alert('[ ERR ] 無效數據輸入。'); return; }
+        if (!text.trim()) { showToast('無效數據輸入。', 'error'); return; }
 
         const lines = text.split('\n');
         for (let i = 0; i < lines.length; i++) {
@@ -1009,6 +1170,99 @@
         
         // 檔名格式：115.03-給各單位雞精名單-印
         downloadWord(html, `${rocCurrentYear}.${month}-給各單位雞精名單-印`);
+    }
+
+    // ==========================================
+    // 模塊三擴充：住民速查排序功能
+    // ==========================================
+    let directorySortKey = '';
+    let directorySortDir = 'asc';
+
+    function sortDirectory(key) {
+        if (directorySortKey === key) {
+            directorySortDir = directorySortDir === 'asc' ? 'desc' : 'asc';
+        } else {
+            directorySortKey = key;
+            directorySortDir = key === 'age' ? 'desc' : 'asc';
+        }
+
+        allResidents.sort((a, b) => {
+            let va = a[key], vb = b[key];
+            if (key === 'age') {
+                return directorySortDir === 'asc' ? va - vb : vb - va;
+            }
+            va = String(va); vb = String(vb);
+            return directorySortDir === 'asc' ? va.localeCompare(vb, 'zh-TW') : vb.localeCompare(va, 'zh-TW');
+        });
+
+        // 更新排序指示器
+        document.querySelectorAll('#sec-directory th.sortable').forEach(th => {
+            th.classList.remove('sort-asc', 'sort-desc');
+        });
+        const activeIdx = { unitCode: 0, room: 1, age: 3 }[key];
+        const headers = document.querySelectorAll('#sec-directory th.sortable');
+        for (const th of headers) {
+            if (th.getAttribute('onclick').includes(`'${key}'`)) {
+                th.classList.add(directorySortDir === 'asc' ? 'sort-asc' : 'sort-desc');
+                break;
+            }
+        }
+
+        renderDirectory();
+    }
+
+    // ==========================================
+    // 優雅換月：資料重置
+    // ==========================================
+    function openResetModal() {
+        document.getElementById('resetModal').classList.add('open');
+        closeNav();
+    }
+    function closeResetModal() {
+        document.getElementById('resetModal').classList.remove('open');
+    }
+    function confirmReset() {
+        // 清除所有 localStorage 快取
+        localStorage.removeItem('nh_core_directory');
+        localStorage.removeItem('nh_current_vets');
+        localStorage.removeItem('nh_vet_title');
+        localStorage.removeItem('nh_vet_input_j');
+        localStorage.removeItem('nh_vet_input_k');
+        localStorage.removeItem('nh_vet_memory');
+        localStorage.removeItem('nh_global_data');
+        localStorage.removeItem('nh_target_month');
+
+        // 重置記憶體變數
+        globalData = [];
+        allResidents = [];
+        currentVets = [];
+        reportTitleStr = '';
+        directorySortKey = '';
+        directorySortDir = 'asc';
+
+        // 重置 UI 元件
+        document.getElementById('vetData').value = '';
+        document.getElementById('excelData').value = '';
+        document.getElementById('input-J').value = '0';
+        document.getElementById('input-K').value = '0';
+        document.getElementById('vetDashboard').classList.remove('visible');
+        document.getElementById('vetTableWrapper').style.display = 'none';
+        document.getElementById('vetBody').innerHTML = '';
+        document.getElementById('exportArea').style.display = 'none';
+        document.getElementById('statusMsg').className = 'status-msg';
+        document.getElementById('statusMsg').style.display = 'none';
+        document.getElementById('directoryBody').innerHTML = '<tr><td colspan="5" style="color: var(--text-muted); padding: 40px; text-align: center;">SYSTEM_WAITING > 請先於「慶生處理區」載入全區名冊建立本地資料庫。</td></tr>';
+        document.getElementById('dirCount').textContent = '';
+        document.getElementById('unitFilter').value = '';
+        document.getElementById('searchInput').value = '';
+
+        // 清除排序指示器
+        document.querySelectorAll('#sec-directory th.sortable').forEach(th => {
+            th.classList.remove('sort-asc', 'sort-desc');
+        });
+
+        closeResetModal();
+        showToast('已為您準備好全新的工作檯，祝工作順利！', 'success', 4000);
     }
 </script>
 
