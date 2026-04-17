@@ -1118,11 +1118,11 @@
 
     function exportCsv2() {
         const month = document.getElementById('monthInput').value.padStart(2, '0');
-        let csvContent = '床位,姓名,性別,出生碼,民國生日,年齡\n';
-        globalData.forEach(d => csvContent += `${d.room},${d.name},${d.rawGender},${d.cleanBirthday},${d.rocDate},${d.age}\n`);
-        const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' });
+        let content = '床位\t住民姓名\t性別\t出生日期\n';
+        globalData.forEach(d => content += `${d.room}\t${d.name}\t${d.rawGender}\t${d.cleanBirthday}\t${d.rocDate}\t${d.age}\n`);
+        const blob = new Blob(['\ufeff' + content], { type: 'application/vnd.ms-excel;charset=utf-8;' });
         const link = document.createElement('a'); link.href = URL.createObjectURL(blob);
-        link.download = `${rocCurrentYear}.${month}月-壽星名單.csv`; link.click();
+        link.download = `${rocCurrentYear}.${month}月壽星名單.xls`; link.click();
     }
 
     function exportDoc3() {
