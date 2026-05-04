@@ -911,7 +911,12 @@
                 if (restoredStatus) memory[name] = restoredStatus;
             } else if (cols.length >= 4) {
                 bldg = (cols[1] || '').trim(); bed = (cols[2] || '').trim(); name = (cols[3] || '').trim();
-                days = cols[6] ? parseInt(cols[6].trim(), 10) : 999;
+                days = NaN;
+                for (let j = 4; j < cols.length; j++) {
+                    const v = (cols[j] || '').trim();
+                    if (/^\d+$/.test(v)) { days = parseInt(v, 10); break; }
+                }
+                if (isNaN(days)) days = 999;
             } else { continue; }
 
             if (!name) continue;
