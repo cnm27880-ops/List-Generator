@@ -705,9 +705,30 @@
             <button class="btn btn-rose" onclick="exportDoc3()">
                 <svg class="icon"><use href="#icon-box"></use></svg> 單位雞精名單((Word))
             </button>
-            <button class="btn btn-teal" onclick="exportPoster()">
+            <button class="btn btn-teal" onclick="openPosterEditor()">
                 <svg class="icon"><use href="#icon-cake"></use></svg> 彩色壽星海報(Word)
             </button>
+        </div>
+
+        <div id="posterEditor" class="control-panel sketch-box" style="display: none; margin-top: 24px;">
+            <div style="display: flex; gap: 12px; flex-wrap: wrap; align-items: center; margin-bottom: 16px;">
+                <button class="btn btn-sand" onclick="document.getElementById('posterImageInput').click()">
+                    <svg class="icon"><use href="#icon-cake"></use></svg> 新增插畫
+                </button>
+                <input type="file" id="posterImageInput" accept="image/*" multiple style="display: none;" onchange="addPosterImages(event)">
+                <button class="btn btn-teal" onclick="exportPoster()">
+                    <svg class="icon"><use href="#icon-file"></use></svg> 產出彩色海報(Word)
+                </button>
+                <button class="btn btn-rose" onclick="closePosterEditor()">關閉編輯器</button>
+                <span style="font-size: 13px; color: var(--text-muted); flex: 1; min-width: 200px;">
+                    拖曳插畫可移動、右下角圓點可縮放、左上角 × 或選取後按 Delete 可刪除。沒地方放就不加或刪掉即可。
+                </span>
+            </div>
+            <div style="overflow: auto; max-height: 80vh; background: var(--bg-panel); padding: 20px; display: flex; justify-content: center;">
+                <div id="posterCanvas" style="position: relative; width: 794px; height: 1123px; background: #fff; box-shadow: 0 0 12px rgba(0,0,0,0.35); flex: none;">
+                    <div id="posterContent" style="position: absolute; inset: 0; padding: 76px; box-sizing: border-box; overflow: hidden; font-family: 'DFKai-SB', '標楷體', serif;"></div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -1231,12 +1252,15 @@
         return chars[0] + 'O'.repeat(chars.length - 2) + chars[chars.length - 1];
     }
 
-    // 依性別與年齡自動推算尊稱（可於產出的 Word 中再微調個別例外）
-    // 女性：未滿 60 歲→女士，其餘→奶奶；男性：未滿 75 歲→伯伯，其餘→爺爺
+    // 依性別與年齡自動推算尊稱（可於海報編輯器產出後再微調個別例外）
+    // 女性：71 歲(含)以上→奶奶，70 歲(含)以下→女士
+    // 男性：75 歲(含)以上→爺爺，61～74 歲→伯伯，60 歲(含)以下→大哥
     function honorific(gender, age) {
         const a = parseInt(age, 10) || 0;
-        if (gender === '女') return a < 60 ? '女士' : '奶奶';
-        return a < 75 ? '伯伯' : '爺爺';
+        if (gender === '女') return a >= 71 ? '奶奶' : '女士';
+        if (a >= 75) return '爺爺';
+        if (a >= 61) return '伯伯';
+        return '大哥';
     }
 
     // 慶生會資訊的儲存與還原（減少每月重複輸入）
@@ -1254,40 +1278,26 @@
         });
     }
 
-    function exportPoster() {
-        if (!globalData || globalData.length === 0) {
-            showToast('尚無壽星資料，請先建立壽星索引庫。', 'error');
-            return;
-        }
+    // ---- 海報內容（標題 + 雙欄彩色名單 + 慶生會頁尾），插畫另外以浮動圖片疊加 ----
+    function buildPosterContentHtml() {
         const month = document.getElementById('monthInput').value.padStart(2, '0');
-
-        // 慶生會資訊（可於上方欄位修改，留空則該行不顯示）
         const partyDate = (document.getElementById('partyDate').value || '').trim();
         const partyTime = (document.getElementById('partyTime').value || '').trim();
         const partyPlace = (document.getElementById('partyPlace').value || '').trim();
         const partyContact = (document.getElementById('partyContact').value || '').trim();
-        savePartyInfo();
 
-        // 僅取護理之家 H 區住民，並依床位排序
         const data = globalData
             .filter(d => d.unitCode.startsWith('H'))
             .sort((a, b) => a.room.localeCompare(b.room, 'zh-TW'));
+        if (data.length === 0) return null;
 
-        if (data.length === 0) {
-            showToast('本月無 H 區壽星可製作海報。', 'warn');
-            return;
-        }
-
-        // 七彩繽紛配色（逐列輪替）
         const palette = ['#F8BBD0', '#FFF59D', '#C8E6C9', '#B3E5FC', '#FFE0B2', '#E1BEE7', '#D7CCC8', '#B2EBF2'];
         const border = '1px solid #c98bbb';
 
-        // 標題列（單位/姓名/出生日/年齡）
         const headerCells = ['單位', '姓名', '出生日', '年齡'].map(t =>
             `<td bgcolor="#E1BEE7" style="border:${border}; padding:4px 8px; font-weight:bold; text-align:center;">${t}</td>`
         ).join('');
 
-        // 單筆資料的四個儲存格
         const cells = (d, color) => {
             if (!d) return `<td style="border:none;"></td><td style="border:none;"></td><td style="border:none;"></td><td style="border:none;"></td>`;
             const display = maskName(d.name) + honorific(d.gender, d.age);
@@ -1298,39 +1308,181 @@
                 <td bgcolor="${color}" style="border:${border}; padding:3px 8px; font-weight:bold; color:#1565c0; text-align:center;">${d.age}</td>`;
         };
 
-        // 左右雙欄排版：左半在左、右半在右
         const half = Math.ceil(data.length / 2);
         let rows = '';
         for (let i = 0; i < half; i++) {
-            const left = data[i];
-            const right = data[i + half];
-            rows += `<tr>${cells(left, palette[i % palette.length])}` +
+            rows += `<tr>${cells(data[i], palette[i % palette.length])}` +
                     `<td style="border:none; width:16px;"></td>` +
-                    `${cells(right, palette[(i + half) % palette.length])}</tr>`;
+                    `${cells(data[i + half], palette[(i + half) % palette.length])}</tr>`;
         }
 
         let html = `
         <div style="text-align:center;">
             <p style="font-size:26pt; font-weight:bold; color:#2E7D32; margin:0; line-height:1.2;">臺中榮總嘉義分院附設護理之家</p>
-            <p style="font-size:26pt; font-weight:bold; color:#E65100; margin:0; line-height:1.2;">${rocCurrentYear} 年 ${month} 月壽星名單</p>
-            <p style="font-size:20pt; margin:4px 0;">🌷🌸🌼🌺💐🌸🌼🌷🌺💐🌸🌼</p>
+            <p style="font-size:26pt; font-weight:bold; color:#E65100; margin:0 0 10px 0; line-height:1.2;">${rocCurrentYear} 年 ${month} 月壽星名單</p>
         </div>
         <table cellspacing="0" cellpadding="0" align="center" style="border-collapse:collapse; margin:0 auto; font-size:14pt;">
             <tr>${headerCells}<td style="border:none; width:16px;"></td>${headerCells}</tr>
             ${rows}
         </table>`;
 
-        // 慶生會資訊footer
         if (partyDate || partyTime || partyPlace || partyContact) {
             html += `<div style="margin-top:20px; font-size:15pt; font-weight:bold; color:#c2185b; line-height:1.9;">`;
-            if (partyDate) html += `<p style="margin:0;">${partyDate}歡樂慶生會 🎂</p>`;
+            if (partyDate) html += `<p style="margin:0;">${partyDate}歡樂慶生會</p>`;
             if (partyTime) html += `<p style="margin:0;">活動時間：${partyTime}</p>`;
             if (partyPlace) html += `<p style="margin:0;">活動地點：${partyPlace}</p>`;
             if (partyContact) html += `<p style="margin:0;">活動聯絡人：${partyContact}</p>`;
             html += `</div>`;
         }
+        return html;
+    }
 
-        downloadWord(html, `${rocCurrentYear}.${month}月-彩色壽星名單海報`);
+    // ---- 海報編輯器：開啟即時預覽，並可自由加入 / 移動 / 縮放插畫 ----
+    let selectedPosterImg = null;
+
+    function openPosterEditor() {
+        if (!globalData || globalData.length === 0) {
+            showToast('尚無壽星資料，請先建立壽星索引庫。', 'error');
+            return;
+        }
+        savePartyInfo();
+        const content = buildPosterContentHtml();
+        if (content === null) {
+            showToast('本月無 H 區壽星可製作海報。', 'warn');
+            return;
+        }
+        document.getElementById('posterContent').innerHTML = content;
+        document.getElementById('posterEditor').style.display = 'block';
+        document.getElementById('posterEditor').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    function closePosterEditor() {
+        document.getElementById('posterEditor').style.display = 'none';
+    }
+
+    function selectPosterImg(el) {
+        if (selectedPosterImg) selectedPosterImg.style.outline = '';
+        selectedPosterImg = el;
+        if (el) el.style.outline = '2px dashed #d35f40';
+    }
+
+    function addPosterImages(event) {
+        const files = Array.from(event.target.files || []);
+        files.forEach((file, idx) => {
+            if (!file.type.startsWith('image/')) return;
+            const reader = new FileReader();
+            reader.onload = e => createPosterImage(e.target.result, 40 + idx * 24, 40 + idx * 24);
+            reader.readAsDataURL(file);
+        });
+        event.target.value = ''; // 允許重複選同一檔
+    }
+
+    function createPosterImage(dataUrl, x, y) {
+        const canvas = document.getElementById('posterCanvas');
+        const wrap = document.createElement('div');
+        wrap.className = 'poster-img';
+        wrap.style.cssText = `position:absolute; left:${x}px; top:${y}px; width:140px; cursor:move; z-index:10;`;
+        wrap.innerHTML = `
+            <img src="${dataUrl}" draggable="false" style="width:100%; height:auto; display:block; pointer-events:none;">
+            <span class="img-del" title="刪除" style="position:absolute; top:-12px; right:-12px; width:22px; height:22px; line-height:18px; text-align:center; background:#a84c4c; color:#fff; border:2px solid #fff; border-radius:50%; cursor:pointer; font-weight:bold;">×</span>
+            <span class="img-resize" title="縮放" style="position:absolute; right:-7px; bottom:-7px; width:16px; height:16px; background:#d35f40; border:2px solid #fff; border-radius:50%; cursor:nwse-resize;"></span>`;
+        canvas.appendChild(wrap);
+        selectPosterImg(wrap);
+
+        const img = wrap.querySelector('img');
+        const delBtn = wrap.querySelector('.img-del');
+        const resizeHandle = wrap.querySelector('.img-resize');
+
+        delBtn.addEventListener('mousedown', ev => ev.stopPropagation());
+        delBtn.addEventListener('click', ev => {
+            ev.stopPropagation();
+            if (selectedPosterImg === wrap) selectedPosterImg = null;
+            wrap.remove();
+        });
+
+        // 拖曳移動
+        wrap.addEventListener('mousedown', ev => {
+            if (ev.target === resizeHandle || ev.target === delBtn) return;
+            ev.preventDefault();
+            selectPosterImg(wrap);
+            const startX = ev.clientX, startY = ev.clientY;
+            const origLeft = wrap.offsetLeft, origTop = wrap.offsetTop;
+            const onMove = m => {
+                let nl = origLeft + (m.clientX - startX);
+                let nt = origTop + (m.clientY - startY);
+                nl = Math.max(0, Math.min(nl, canvas.clientWidth - wrap.offsetWidth));
+                nt = Math.max(0, Math.min(nt, canvas.clientHeight - wrap.offsetHeight));
+                wrap.style.left = nl + 'px';
+                wrap.style.top = nt + 'px';
+            };
+            const onUp = () => {
+                document.removeEventListener('mousemove', onMove);
+                document.removeEventListener('mouseup', onUp);
+            };
+            document.addEventListener('mousemove', onMove);
+            document.addEventListener('mouseup', onUp);
+        });
+
+        // 縮放（維持原比例）
+        resizeHandle.addEventListener('mousedown', ev => {
+            ev.preventDefault();
+            ev.stopPropagation();
+            selectPosterImg(wrap);
+            const startX = ev.clientX;
+            const startW = wrap.offsetWidth;
+            const onMove = m => {
+                const nw = Math.max(30, startW + (m.clientX - startX));
+                wrap.style.width = nw + 'px';
+            };
+            const onUp = () => {
+                document.removeEventListener('mousemove', onMove);
+                document.removeEventListener('mouseup', onUp);
+            };
+            document.addEventListener('mousemove', onMove);
+            document.addEventListener('mouseup', onUp);
+        });
+    }
+
+    // 鍵盤刪除選取的插畫
+    document.addEventListener('keydown', ev => {
+        if ((ev.key === 'Delete' || ev.key === 'Backspace') && selectedPosterImg) {
+            const tag = (ev.target.tagName || '').toLowerCase();
+            if (tag === 'input' || tag === 'textarea' || tag === 'select') return;
+            ev.preventDefault();
+            selectedPosterImg.remove();
+            selectedPosterImg = null;
+        }
+    });
+
+    function exportPoster() {
+        if (!globalData || globalData.length === 0) {
+            showToast('尚無壽星資料，請先建立壽星索引庫。', 'error');
+            return;
+        }
+        const month = document.getElementById('monthInput').value.padStart(2, '0');
+        savePartyInfo();
+        const content = buildPosterContentHtml();
+        if (content === null) {
+            showToast('本月無 H 區壽星可製作海報。', 'warn');
+            return;
+        }
+
+        // 將編輯器中的插畫轉成「相對頁面定位」的浮動圖片（px → pt，96dpi）
+        const PX_TO_PT = 72 / 96;
+        let floatImgs = '';
+        document.querySelectorAll('#posterCanvas .poster-img').forEach(wrap => {
+            const img = wrap.querySelector('img');
+            const xpt = (wrap.offsetLeft * PX_TO_PT).toFixed(1);
+            const ypt = (wrap.offsetTop * PX_TO_PT).toFixed(1);
+            const wpt = (wrap.offsetWidth * PX_TO_PT).toFixed(1);
+            const hpt = (wrap.offsetHeight * PX_TO_PT).toFixed(1);
+            floatImgs += `<img src="${img.src}" style="position:absolute; z-index:5;` +
+                ` mso-position-horizontal:absolute; mso-position-horizontal-relative:page;` +
+                ` mso-position-vertical:absolute; mso-position-vertical-relative:page;` +
+                ` margin-left:${xpt}pt; margin-top:${ypt}pt; width:${wpt}pt; height:${hpt}pt;">`;
+        });
+
+        downloadWord(floatImgs + content, `${rocCurrentYear}.${month}月-彩色壽星名單海報`);
     }
 
     // ==========================================
