@@ -726,7 +726,7 @@
             </div>
             <div style="overflow: auto; max-height: 80vh; background: var(--bg-panel); padding: 20px; display: flex; justify-content: center;">
                 <div id="posterCanvas" style="position: relative; width: 794px; height: 1123px; background: #fff; box-shadow: 0 0 12px rgba(0,0,0,0.35); flex: none;">
-                    <div id="posterContent" style="position: absolute; inset: 0; padding: 76px; box-sizing: border-box; overflow: hidden; font-family: 'DFKai-SB', '標楷體', serif;"></div>
+                    <div id="posterContent" style="position: absolute; inset: 0; padding: 76px; box-sizing: border-box; overflow: hidden; font-family: 'DFKai-SB', '標楷體', 'Noto Serif CJK TC', 'PMingLiU', '新細明體', 'Microsoft JhengHei', serif;"></div>
                 </div>
             </div>
         </div>
@@ -896,7 +896,7 @@
             <![endif]-->
             <style>
                 @page { size: A4 portrait; margin: 2.0cm; mso-page-orientation: portrait; }
-                body { font-family: '標楷體', 'DFKai-SB', serif; font-size: 14pt; } 
+                body { font-family: '標楷體', 'DFKai-SB', 'Noto Serif CJK TC', 'PMingLiU', '新細明體', 'Microsoft JhengHei', serif; font-size: 14pt; }
                 p { margin: 0; padding: 0; line-height: 1.5; }
             </style>
         </head>
@@ -1291,15 +1291,25 @@
             .sort((a, b) => a.room.localeCompare(b.room, 'zh-TW'));
         if (data.length === 0) return null;
 
-        const palette = ['#F8BBD0', '#FFF59D', '#C8E6C9', '#B3E5FC', '#FFE0B2', '#E1BEE7', '#D7CCC8', '#B2EBF2'];
+        // 馬卡龍色系：每個單位 (H1–H6) 固定一色，同單位住民同色
+        const unitColors = {
+            H1: '#F9C9D6', // 馬卡龍粉紅
+            H2: '#FCE8B2', // 馬卡龍鵝黃
+            H3: '#C8E6C9', // 馬卡龍薄荷綠
+            H4: '#BBDEF0', // 馬卡龍天空藍
+            H5: '#D9C8EC', // 馬卡龍薰衣草紫
+            H6: '#FAD4B0'  // 馬卡龍蜜桃橘
+        };
         const border = '1px solid #c98bbb';
+        const colorFor = d => (d && unitColors[d.unitCode]) || '#EFEFEF';
 
         const headerCells = ['單位', '姓名', '出生日', '年齡'].map(t =>
-            `<td bgcolor="#E1BEE7" style="border:${border}; padding:4px 8px; font-weight:bold; text-align:center;">${t}</td>`
+            `<td bgcolor="#E9E4EF" style="border:${border}; padding:4px 8px; font-weight:bold; text-align:center;">${t}</td>`
         ).join('');
 
-        const cells = (d, color) => {
+        const cells = (d) => {
             if (!d) return `<td style="border:none;"></td><td style="border:none;"></td><td style="border:none;"></td><td style="border:none;"></td>`;
+            const color = colorFor(d);
             const display = maskName(d.name) + honorific(d.gender, d.age);
             return `
                 <td bgcolor="${color}" style="border:${border}; padding:3px 8px; font-weight:bold; color:#1b5e20; white-space:nowrap; text-align:center;">${d.room}</td>
@@ -1311,9 +1321,9 @@
         const half = Math.ceil(data.length / 2);
         let rows = '';
         for (let i = 0; i < half; i++) {
-            rows += `<tr>${cells(data[i], palette[i % palette.length])}` +
+            rows += `<tr>${cells(data[i])}` +
                     `<td style="border:none; width:16px;"></td>` +
-                    `${cells(data[i + half], palette[(i + half) % palette.length])}</tr>`;
+                    `${cells(data[i + half])}</tr>`;
         }
 
         let html = `
