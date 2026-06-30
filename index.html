@@ -680,6 +680,19 @@
                 <svg class="icon"><use href="#icon-terminal"></use></svg> 建立壽星索引庫
             </button>
             <div id="statusMsg" class="status-msg"></div>
+
+            <div class="row-group" style="margin-top: 24px;">
+                <label>
+                    <svg class="icon"><use href="#icon-cake"></use></svg>
+                    慶生會資訊（彩色壽星海報專用，可留空）
+                </label>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                    <input type="text" id="partyDate" class="sketch-box" placeholder="慶生會日期，例：115 年 06 月 23 日(二)">
+                    <input type="text" id="partyTime" class="sketch-box" value="10：00～11：00" placeholder="活動時間">
+                    <input type="text" id="partyPlace" class="sketch-box" value="住民房間內個人化方式慶祝" placeholder="活動地點">
+                    <input type="text" id="partyContact" class="sketch-box" value="社工陳詩齡 4671、林曉鈺 4771、蔡郁濈 4871" placeholder="活動聯絡人">
+                </div>
+            </div>
         </div>
         
         <div id="exportArea" class="export-panel">
@@ -691,6 +704,9 @@
             </button>
             <button class="btn btn-rose" onclick="exportDoc3()">
                 <svg class="icon"><use href="#icon-box"></use></svg> 單位雞精名單((Word))
+            </button>
+            <button class="btn btn-teal" onclick="exportPoster()">
+                <svg class="icon"><use href="#icon-cake"></use></svg> 彩色壽星海報(Word)
             </button>
         </div>
     </div>
@@ -801,6 +817,9 @@
     // 頁面載入時：自動還原上次的所有資料
     // ==========================================
     window.addEventListener('load', function() {
+        // 0. 恢復慶生會資訊（彩色海報用）
+        restorePartyInfo();
+
         // 1. 恢復總名冊 (速查表)
         const savedData = localStorage.getItem('nh_core_directory');
         if (savedData) {
@@ -1198,6 +1217,120 @@
         
         // 檔名格式：115.03-給各單位雞精名單-印
         downloadWord(html, `${rocCurrentYear}.${month}-給各單位雞精名單-印`);
+    }
+
+    // ==========================================
+    // 模塊二擴充：彩色壽星海報 (七彩繽紛 Word)
+    // ==========================================
+    // 姓名去識別化：保留第一個與最後一個字，中間以 O 代替
+    // 例：賴黃允→賴O允、李郭貴美→李OO美、邱陳月嬌→邱OO嬌
+    function maskName(name) {
+        const chars = [...String(name).trim()];
+        if (chars.length <= 1) return name;
+        if (chars.length === 2) return chars[0] + 'O';
+        return chars[0] + 'O'.repeat(chars.length - 2) + chars[chars.length - 1];
+    }
+
+    // 依性別與年齡自動推算尊稱（可於產出的 Word 中再微調個別例外）
+    // 女性：未滿 60 歲→女士，其餘→奶奶；男性：未滿 75 歲→伯伯，其餘→爺爺
+    function honorific(gender, age) {
+        const a = parseInt(age, 10) || 0;
+        if (gender === '女') return a < 60 ? '女士' : '奶奶';
+        return a < 75 ? '伯伯' : '爺爺';
+    }
+
+    // 慶生會資訊的儲存與還原（減少每月重複輸入）
+    function savePartyInfo() {
+        ['partyDate', 'partyTime', 'partyPlace', 'partyContact'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) localStorage.setItem('nh_' + id, el.value);
+        });
+    }
+    function restorePartyInfo() {
+        ['partyDate', 'partyTime', 'partyPlace', 'partyContact'].forEach(id => {
+            const saved = localStorage.getItem('nh_' + id);
+            const el = document.getElementById(id);
+            if (el && saved !== null) el.value = saved;
+        });
+    }
+
+    function exportPoster() {
+        if (!globalData || globalData.length === 0) {
+            showToast('尚無壽星資料，請先建立壽星索引庫。', 'error');
+            return;
+        }
+        const month = document.getElementById('monthInput').value.padStart(2, '0');
+
+        // 慶生會資訊（可於上方欄位修改，留空則該行不顯示）
+        const partyDate = (document.getElementById('partyDate').value || '').trim();
+        const partyTime = (document.getElementById('partyTime').value || '').trim();
+        const partyPlace = (document.getElementById('partyPlace').value || '').trim();
+        const partyContact = (document.getElementById('partyContact').value || '').trim();
+        savePartyInfo();
+
+        // 僅取護理之家 H 區住民，並依床位排序
+        const data = globalData
+            .filter(d => d.unitCode.startsWith('H'))
+            .sort((a, b) => a.room.localeCompare(b.room, 'zh-TW'));
+
+        if (data.length === 0) {
+            showToast('本月無 H 區壽星可製作海報。', 'warn');
+            return;
+        }
+
+        // 七彩繽紛配色（逐列輪替）
+        const palette = ['#F8BBD0', '#FFF59D', '#C8E6C9', '#B3E5FC', '#FFE0B2', '#E1BEE7', '#D7CCC8', '#B2EBF2'];
+        const border = '1px solid #c98bbb';
+
+        // 標題列（單位/姓名/出生日/年齡）
+        const headerCells = ['單位', '姓名', '出生日', '年齡'].map(t =>
+            `<td bgcolor="#E1BEE7" style="border:${border}; padding:4px 8px; font-weight:bold; text-align:center;">${t}</td>`
+        ).join('');
+
+        // 單筆資料的四個儲存格
+        const cells = (d, color) => {
+            if (!d) return `<td style="border:none;"></td><td style="border:none;"></td><td style="border:none;"></td><td style="border:none;"></td>`;
+            const display = maskName(d.name) + honorific(d.gender, d.age);
+            return `
+                <td bgcolor="${color}" style="border:${border}; padding:3px 8px; font-weight:bold; color:#1b5e20; white-space:nowrap; text-align:center;">${d.room}</td>
+                <td bgcolor="${color}" style="border:${border}; padding:3px 8px; font-weight:bold; color:#6a1b9a; white-space:nowrap;">${display}</td>
+                <td bgcolor="${color}" style="border:${border}; padding:3px 8px; font-weight:bold; color:#c62828; text-align:center;">${d.rocDate}</td>
+                <td bgcolor="${color}" style="border:${border}; padding:3px 8px; font-weight:bold; color:#1565c0; text-align:center;">${d.age}</td>`;
+        };
+
+        // 左右雙欄排版：左半在左、右半在右
+        const half = Math.ceil(data.length / 2);
+        let rows = '';
+        for (let i = 0; i < half; i++) {
+            const left = data[i];
+            const right = data[i + half];
+            rows += `<tr>${cells(left, palette[i % palette.length])}` +
+                    `<td style="border:none; width:16px;"></td>` +
+                    `${cells(right, palette[(i + half) % palette.length])}</tr>`;
+        }
+
+        let html = `
+        <div style="text-align:center;">
+            <p style="font-size:26pt; font-weight:bold; color:#2E7D32; margin:0; line-height:1.2;">臺中榮總嘉義分院附設護理之家</p>
+            <p style="font-size:26pt; font-weight:bold; color:#E65100; margin:0; line-height:1.2;">${rocCurrentYear} 年 ${month} 月壽星名單</p>
+            <p style="font-size:20pt; margin:4px 0;">🌷🌸🌼🌺💐🌸🌼🌷🌺💐🌸🌼</p>
+        </div>
+        <table cellspacing="0" cellpadding="0" align="center" style="border-collapse:collapse; margin:0 auto; font-size:14pt;">
+            <tr>${headerCells}<td style="border:none; width:16px;"></td>${headerCells}</tr>
+            ${rows}
+        </table>`;
+
+        // 慶生會資訊footer
+        if (partyDate || partyTime || partyPlace || partyContact) {
+            html += `<div style="margin-top:20px; font-size:15pt; font-weight:bold; color:#c2185b; line-height:1.9;">`;
+            if (partyDate) html += `<p style="margin:0;">${partyDate}歡樂慶生會 🎂</p>`;
+            if (partyTime) html += `<p style="margin:0;">活動時間：${partyTime}</p>`;
+            if (partyPlace) html += `<p style="margin:0;">活動地點：${partyPlace}</p>`;
+            if (partyContact) html += `<p style="margin:0;">活動聯絡人：${partyContact}</p>`;
+            html += `</div>`;
+        }
+
+        downloadWord(html, `${rocCurrentYear}.${month}月-彩色壽星名單海報`);
     }
 
     // ==========================================
