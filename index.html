@@ -726,7 +726,7 @@
             </div>
             <div style="overflow: auto; max-height: 80vh; background: var(--bg-panel); padding: 20px; display: flex; justify-content: center;">
                 <div id="posterCanvas" style="position: relative; width: 794px; height: 1123px; background: #fff; box-shadow: 0 0 12px rgba(0,0,0,0.35); flex: none;">
-                    <div id="posterContent" style="position: absolute; inset: 0; padding: 76px; box-sizing: border-box; overflow: hidden; font-family: 'DFKai-SB', '標楷體', 'Noto Serif CJK TC', 'PMingLiU', '新細明體', 'Microsoft JhengHei', serif;"></div>
+                    <div id="posterContent" style="position: absolute; inset: 0; padding: 48px; box-sizing: border-box; overflow: hidden; font-family: 'DFKai-SB', '標楷體', 'Noto Serif CJK TC', 'PMingLiU', '新細明體', 'Microsoft JhengHei', serif;"></div>
                 </div>
             </div>
         </div>
@@ -878,7 +878,7 @@
         }
     });
 
-    function downloadWord(htmlBody, fileName) {
+    function downloadWord(htmlBody, fileName, margin = '2.0cm') {
         const fullHtml = `
         <html xmlns:o="urn:schemas-microsoft-com:office:office" 
               xmlns:w="urn:schemas-microsoft-com:office:word" 
@@ -895,7 +895,7 @@
             </xml>
             <![endif]-->
             <style>
-                @page { size: A4 portrait; margin: 2.0cm; mso-page-orientation: portrait; }
+                @page { size: A4 portrait; margin: ${margin}; mso-page-orientation: portrait; }
                 body { font-family: '標楷體', 'DFKai-SB', 'Noto Serif CJK TC', 'PMingLiU', '新細明體', 'Microsoft JhengHei', serif; font-size: 14pt; }
                 p { margin: 0; padding: 0; line-height: 1.5; }
             </style>
@@ -1303,41 +1303,49 @@
         const border = '1px solid #c98bbb';
         const colorFor = d => (d && unitColors[d.unitCode]) || '#EFEFEF';
 
+        // 名單字體：英數用 Times New Roman、中文用思源黑體 TW
+        const listFont = "font-family:'Times New Roman','思源黑體 TW','Source Han Sans TW','Noto Sans TC',sans-serif;"
+            + " mso-ascii-font-family:'Times New Roman'; mso-hansi-font-family:'Times New Roman';"
+            + " mso-fareast-font-family:'思源黑體 TW';";
+        const navy = '#002060'; // 深藍
+
+        // 名單抬頭：14pt，不套深藍
         const headerCells = ['單位', '姓名', '出生日', '年齡'].map(t =>
-            `<td bgcolor="#E9E4EF" style="border:${border}; padding:4px 8px; font-weight:bold; text-align:center;">${t}</td>`
+            `<td bgcolor="#E9E4EF" style="border:${border}; padding:4px 8px; font-weight:bold; font-size:14pt; text-align:center; ${listFont}">${t}</td>`
         ).join('');
 
+        // 名單內容：18pt，深藍
         const cells = (d) => {
             if (!d) return `<td style="border:none;"></td><td style="border:none;"></td><td style="border:none;"></td><td style="border:none;"></td>`;
             const color = colorFor(d);
             const display = maskName(d.name) + honorific(d.gender, d.age);
+            const tdStyle = `border:${border}; padding:3px 8px; font-weight:bold; font-size:18pt; color:${navy}; ${listFont}`;
             return `
-                <td bgcolor="${color}" style="border:${border}; padding:3px 8px; font-weight:bold; color:#1b5e20; white-space:nowrap; text-align:center;">${d.room}</td>
-                <td bgcolor="${color}" style="border:${border}; padding:3px 8px; font-weight:bold; color:#6a1b9a; white-space:nowrap;">${display}</td>
-                <td bgcolor="${color}" style="border:${border}; padding:3px 8px; font-weight:bold; color:#c62828; text-align:center;">${d.rocDate}</td>
-                <td bgcolor="${color}" style="border:${border}; padding:3px 8px; font-weight:bold; color:#1565c0; text-align:center;">${d.age}</td>`;
+                <td bgcolor="${color}" style="${tdStyle} white-space:nowrap; text-align:center;">${d.room}</td>
+                <td bgcolor="${color}" style="${tdStyle} white-space:nowrap;">${display}</td>
+                <td bgcolor="${color}" style="${tdStyle} text-align:center;">${d.rocDate}</td>
+                <td bgcolor="${color}" style="${tdStyle} text-align:center;">${d.age}</td>`;
         };
 
+        // 左右兩半為同一個連續表格，中間不留間隔欄（避免細縫）
         const half = Math.ceil(data.length / 2);
         let rows = '';
         for (let i = 0; i < half; i++) {
-            rows += `<tr>${cells(data[i])}` +
-                    `<td style="border:none; width:16px;"></td>` +
-                    `${cells(data[i + half])}</tr>`;
+            rows += `<tr>${cells(data[i])}${cells(data[i + half])}</tr>`;
         }
 
         let html = `
         <div style="text-align:center;">
-            <p style="font-size:26pt; font-weight:bold; color:#2E7D32; margin:0; line-height:1.2;">臺中榮總嘉義分院附設護理之家</p>
-            <p style="font-size:26pt; font-weight:bold; color:#E65100; margin:0 0 10px 0; line-height:1.2;">${rocCurrentYear} 年 ${month} 月壽星名單</p>
+            <p style="font-size:36pt; font-weight:bold; color:#2E7D32; margin:0; line-height:1.2;">臺中榮總嘉義分院附設護理之家</p>
+            <p style="font-size:36pt; font-weight:bold; color:#E65100; margin:0 0 10px 0; line-height:1.2;">${rocCurrentYear} 年 ${month} 月壽星名單</p>
         </div>
-        <table cellspacing="0" cellpadding="0" align="center" style="border-collapse:collapse; margin:0 auto; font-size:14pt;">
-            <tr>${headerCells}<td style="border:none; width:16px;"></td>${headerCells}</tr>
+        <table cellspacing="0" cellpadding="0" align="center" style="border-collapse:collapse; margin:0 auto;">
+            <tr>${headerCells}${headerCells}</tr>
             ${rows}
         </table>`;
 
         if (partyDate || partyTime || partyPlace || partyContact) {
-            html += `<div style="margin-top:20px; font-size:15pt; font-weight:bold; color:#c2185b; line-height:1.9;">`;
+            html += `<div style="margin-top:20px; font-size:20pt; font-weight:bold; color:#c2185b; line-height:1.9;">`;
             if (partyDate) html += `<p style="margin:0;">${partyDate}歡樂慶生會</p>`;
             if (partyTime) html += `<p style="margin:0;">活動時間：${partyTime}</p>`;
             if (partyPlace) html += `<p style="margin:0;">活動地點：${partyPlace}</p>`;
@@ -1492,7 +1500,7 @@
                 ` margin-left:${xpt}pt; margin-top:${ypt}pt; width:${wpt}pt; height:${hpt}pt;">`;
         });
 
-        downloadWord(floatImgs + content, `${rocCurrentYear}.${month}月-彩色壽星名單海報`);
+        downloadWord(floatImgs + content, `${rocCurrentYear}.${month}月-彩色壽星名單海報`, '1.27cm');
     }
 
     // ==========================================
