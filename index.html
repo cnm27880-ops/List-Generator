@@ -429,6 +429,26 @@
             .filter-bar select { width: 100%; }
         }
 
+        /* ========================================
+           列印 / 另存 PDF：只輸出海報畫布，固定 A4 版面，與預覽完全一致
+           ======================================== */
+        @media print {
+            @page { size: A4 portrait; margin: 0; }
+            html, body { margin: 0 !important; padding: 0 !important; background: #fff !important; }
+            /* 列印海報時，#posterCanvas 已被搬到 body 底下；其餘同層元素全部隱藏，避免多印一頁 */
+            body.poster-printing > *:not(#posterCanvas) { display: none !important; }
+            #posterCanvas {
+                position: absolute !important;
+                left: 0 !important; top: 0 !important;
+                width: 210mm !important; height: 297mm !important;
+                box-shadow: none !important; overflow: hidden;
+                background: #fff !important;
+            }
+            /* 列印時隱藏插畫的刪除 / 縮放控制點與選取外框 */
+            #posterCanvas .img-del, #posterCanvas .img-resize { display: none !important; }
+            #posterCanvas .poster-img { outline: none !important; }
+        }
+
         ::-webkit-scrollbar { width: 8px; }
         ::-webkit-scrollbar-track { background: var(--bg-page); }
         ::-webkit-scrollbar-thumb { background: var(--border-hard); }
@@ -711,21 +731,31 @@
         </div>
 
         <div id="posterEditor" class="control-panel sketch-box" style="display: none; margin-top: 24px;">
-            <div style="display: flex; gap: 12px; flex-wrap: wrap; align-items: center; margin-bottom: 16px;">
+            <div style="display: flex; gap: 12px; flex-wrap: wrap; align-items: center; margin-bottom: 12px;">
                 <button class="btn btn-sand" onclick="document.getElementById('posterImageInput').click()">
                     <svg class="icon"><use href="#icon-cake"></use></svg> 新增插畫
                 </button>
                 <input type="file" id="posterImageInput" accept="image/*" multiple style="display: none;" onchange="addPosterImages(event)">
-                <button class="btn btn-teal" onclick="exportPoster()">
-                    <svg class="icon"><use href="#icon-file"></use></svg> 產出彩色海報(Word)
+                <button class="btn btn-teal" onclick="printPoster()">
+                    <svg class="icon"><use href="#icon-file"></use></svg> 另存 PDF（與預覽相同）
+                </button>
+                <button class="btn btn-main" onclick="exportPoster()">
+                    <svg class="icon"><use href="#icon-file"></use></svg> 匯出 Word（可再編輯）
                 </button>
                 <button class="btn btn-rose" onclick="closePosterEditor()">關閉編輯器</button>
+            </div>
+            <div style="display: flex; gap: 12px; flex-wrap: wrap; align-items: center; margin-bottom: 16px;">
+                <label style="display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 700; margin: 0;">
+                    末尾字級（配合插畫調整）
+                    <input type="number" id="footerFontSize" class="sketch-box" value="20" min="8" max="48" step="1"
+                           style="width: 90px; padding: 8px;" oninput="refreshPosterPreview()"> pt
+                </label>
                 <span style="font-size: 13px; color: var(--text-muted); flex: 1; min-width: 200px;">
-                    拖曳插畫可移動、右下角圓點可縮放、左上角 × 或選取後按 Delete 可刪除。沒地方放就不加或刪掉即可。
+                    排版固定；插畫可拖曳移動、右下角圓點縮放、左上角 × 或按 Delete 刪除。建議用「另存 PDF」輸出，與預覽完全一致。
                 </span>
             </div>
-            <div style="overflow: auto; max-height: 80vh; background: var(--bg-panel); padding: 20px; display: flex; justify-content: center;">
-                <div id="posterCanvas" style="position: relative; width: 794px; height: 1123px; background: #fff; box-shadow: 0 0 12px rgba(0,0,0,0.35); flex: none;">
+            <div style="overflow: auto; max-height: 80vh; background: var(--bg-panel); padding: 20px; text-align: center;">
+                <div id="posterCanvas" style="position: relative; display: inline-block; vertical-align: top; width: 794px; height: 1123px; background: #fff; box-shadow: 0 0 12px rgba(0,0,0,0.35);">
                     <div id="posterContent" style="position: absolute; inset: 0; padding: 48px; box-sizing: border-box; overflow: hidden; font-family: 'DFKai-SB', '標楷體', 'Noto Serif CJK TC', 'PMingLiU', '新細明體', 'Microsoft JhengHei', serif;"></div>
                 </div>
             </div>
@@ -1263,15 +1293,16 @@
         return '大哥';
     }
 
-    // 慶生會資訊的儲存與還原（減少每月重複輸入）
+    // 慶生會資訊與末尾字級的儲存與還原（減少每月重複輸入）
+    const POSTER_FIELDS = ['partyDate', 'partyTime', 'partyPlace', 'partyContact', 'footerFontSize'];
     function savePartyInfo() {
-        ['partyDate', 'partyTime', 'partyPlace', 'partyContact'].forEach(id => {
+        POSTER_FIELDS.forEach(id => {
             const el = document.getElementById(id);
             if (el) localStorage.setItem('nh_' + id, el.value);
         });
     }
     function restorePartyInfo() {
-        ['partyDate', 'partyTime', 'partyPlace', 'partyContact'].forEach(id => {
+        POSTER_FIELDS.forEach(id => {
             const saved = localStorage.getItem('nh_' + id);
             const el = document.getElementById(id);
             if (el && saved !== null) el.value = saved;
@@ -1311,7 +1342,7 @@
 
         // 名單抬頭：14pt，不套深藍
         const headerCells = ['單位', '姓名', '出生日', '年齡'].map(t =>
-            `<td bgcolor="#E9E4EF" style="border:${border}; padding:4px 8px; font-weight:bold; font-size:14pt; text-align:center; ${listFont}">${t}</td>`
+            `<td bgcolor="#E9E4EF" style="border:${border}; padding:4px 3px; font-weight:bold; font-size:14pt; text-align:center; ${listFont}">${t}</td>`
         ).join('');
 
         // 名單內容：18pt，深藍
@@ -1319,7 +1350,7 @@
             if (!d) return `<td style="border:none;"></td><td style="border:none;"></td><td style="border:none;"></td><td style="border:none;"></td>`;
             const color = colorFor(d);
             const display = maskName(d.name) + honorific(d.gender, d.age);
-            const tdStyle = `border:${border}; padding:3px 8px; font-weight:bold; font-size:18pt; color:${navy}; ${listFont}`;
+            const tdStyle = `border:${border}; padding:3px 3px; font-weight:bold; font-size:18pt; color:${navy}; ${listFont}`;
             return `
                 <td bgcolor="${color}" style="${tdStyle} white-space:nowrap; text-align:center;">${d.room}</td>
                 <td bgcolor="${color}" style="${tdStyle} white-space:nowrap;">${display}</td>
@@ -1339,13 +1370,16 @@
             <p style="font-size:36pt; font-weight:bold; color:#2E7D32; margin:0; line-height:1.2;">臺中榮總嘉義分院附設護理之家</p>
             <p style="font-size:36pt; font-weight:bold; color:#E65100; margin:0 0 10px 0; line-height:1.2;">${rocCurrentYear} 年 ${month} 月壽星名單</p>
         </div>
+        <div class="poster-table-wrap" style="text-align:center;">
         <table cellspacing="0" cellpadding="0" align="center" style="border-collapse:collapse; margin:0 auto;">
             <tr>${headerCells}${headerCells}</tr>
             ${rows}
-        </table>`;
+        </table>
+        </div>`;
 
         if (partyDate || partyTime || partyPlace || partyContact) {
-            html += `<div style="margin-top:20px; font-size:20pt; font-weight:bold; color:#c2185b; line-height:1.9;">`;
+            const footerPt = parseInt((document.getElementById('footerFontSize') || {}).value, 10) || 20;
+            html += `<div style="margin-top:20px; font-size:${footerPt}pt; font-weight:bold; color:#c2185b; line-height:1.9;">`;
             if (partyDate) html += `<p style="margin:0;">${partyDate}歡樂慶生會</p>`;
             if (partyTime) html += `<p style="margin:0;">活動時間：${partyTime}</p>`;
             if (partyPlace) html += `<p style="margin:0;">活動地點：${partyPlace}</p>`;
@@ -1371,11 +1405,80 @@
         }
         document.getElementById('posterContent').innerHTML = content;
         document.getElementById('posterEditor').style.display = 'block';
+        fitPosterTable();
         document.getElementById('posterEditor').scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
 
     function closePosterEditor() {
         document.getElementById('posterEditor').style.display = 'none';
+    }
+
+    // 保險機制：名單若比置中區更寬，等比例縮小並維持置中（自預覽與 PDF 皆適用）
+    function fitPosterTable() {
+        const content = document.getElementById('posterContent');
+        const table = content && content.querySelector('table');
+        if (!table) return;
+        const wrap = table.parentElement;
+        // 先還原再量測
+        table.style.transform = '';
+        wrap.style.height = '';
+        const cs = getComputedStyle(content);
+        const avail = content.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+        const tw = table.offsetWidth;
+        if (tw > avail + 0.5) {
+            const s = avail / tw;
+            // 溢出時表格會靠左對齊；以左上為原點縮放後，縮放寬度剛好等於置中區寬度，左右自然對齊
+            table.style.transformOrigin = 'top left';
+            table.style.transform = `scale(${s})`;
+            wrap.style.height = (table.offsetHeight * s) + 'px'; // 收合縮小後多餘的垂直空間
+        }
+    }
+
+    // 只重建名單內容（不影響已擺放的插畫，插畫是 canvas 的子層而非 content 的子層）
+    function refreshPosterPreview() {
+        if (document.getElementById('posterEditor').style.display === 'none') return;
+        if (!globalData || globalData.length === 0) return;
+        savePartyInfo();
+        const content = buildPosterContentHtml();
+        if (content !== null) {
+            document.getElementById('posterContent').innerHTML = content;
+            fitPosterTable();
+        }
+    }
+
+    // 另存 PDF：透過瀏覽器列印（列印 CSS 只輸出海報畫布），與預覽完全一致
+    function printPoster() {
+        if (document.getElementById('posterEditor').style.display === 'none') {
+            openPosterEditor();
+        }
+        const canvas = document.getElementById('posterCanvas');
+        if (!canvas || document.getElementById('posterContent').innerHTML.trim() === '') {
+            showToast('尚無可列印的海報內容。', 'warn');
+            return;
+        }
+        selectPosterImg(null); // 移除選取外框，避免印到虛線
+        fitPosterTable();      // 確保列印前已套用自動縮放置中
+
+        // 將畫布暫時搬到 body 底下並隱藏其餘內容，確保 PDF 剛好一頁、且與預覽一致
+        const parent = canvas.parentNode;
+        const next = canvas.nextSibling;
+        let restored = false;
+        const restore = () => {
+            if (restored) return;
+            restored = true;
+            document.body.classList.remove('poster-printing');
+            parent.insertBefore(canvas, next); // 放回原位，編輯器維持可用
+            window.removeEventListener('afterprint', restore);
+        };
+        document.body.appendChild(canvas);
+        document.body.classList.add('poster-printing');
+        window.addEventListener('afterprint', restore);
+
+        showToast('請在列印視窗選擇「另存為 PDF」，邊界設「無」。', 'info', 5000);
+        setTimeout(() => {
+            window.print();
+            setTimeout(restore, 1000); // 後備還原（部分瀏覽器不觸發 afterprint）
+        }, 300);
     }
 
     function selectPosterImg(el) {
