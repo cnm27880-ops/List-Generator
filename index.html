@@ -754,8 +754,8 @@
                     排版固定；插畫可拖曳移動、右下角圓點縮放、左上角 × 或按 Delete 刪除。建議用「另存 PDF」輸出，與預覽完全一致。
                 </span>
             </div>
-            <div style="overflow: auto; max-height: 80vh; background: var(--bg-panel); padding: 20px; display: flex; justify-content: center;">
-                <div id="posterCanvas" style="position: relative; width: 794px; height: 1123px; background: #fff; box-shadow: 0 0 12px rgba(0,0,0,0.35); flex: none;">
+            <div style="overflow: auto; max-height: 80vh; background: var(--bg-panel); padding: 20px; text-align: center;">
+                <div id="posterCanvas" style="position: relative; display: inline-block; vertical-align: top; width: 794px; height: 1123px; background: #fff; box-shadow: 0 0 12px rgba(0,0,0,0.35);">
                     <div id="posterContent" style="position: absolute; inset: 0; padding: 48px; box-sizing: border-box; overflow: hidden; font-family: 'DFKai-SB', '標楷體', 'Noto Serif CJK TC', 'PMingLiU', '新細明體', 'Microsoft JhengHei', serif;"></div>
                 </div>
             </div>
@@ -1342,7 +1342,7 @@
 
         // 名單抬頭：14pt，不套深藍
         const headerCells = ['單位', '姓名', '出生日', '年齡'].map(t =>
-            `<td bgcolor="#E9E4EF" style="border:${border}; padding:4px 8px; font-weight:bold; font-size:14pt; text-align:center; ${listFont}">${t}</td>`
+            `<td bgcolor="#E9E4EF" style="border:${border}; padding:4px 3px; font-weight:bold; font-size:14pt; text-align:center; ${listFont}">${t}</td>`
         ).join('');
 
         // 名單內容：18pt，深藍
@@ -1350,7 +1350,7 @@
             if (!d) return `<td style="border:none;"></td><td style="border:none;"></td><td style="border:none;"></td><td style="border:none;"></td>`;
             const color = colorFor(d);
             const display = maskName(d.name) + honorific(d.gender, d.age);
-            const tdStyle = `border:${border}; padding:3px 8px; font-weight:bold; font-size:18pt; color:${navy}; ${listFont}`;
+            const tdStyle = `border:${border}; padding:3px 3px; font-weight:bold; font-size:18pt; color:${navy}; ${listFont}`;
             return `
                 <td bgcolor="${color}" style="${tdStyle} white-space:nowrap; text-align:center;">${d.room}</td>
                 <td bgcolor="${color}" style="${tdStyle} white-space:nowrap;">${display}</td>
