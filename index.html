@@ -1379,7 +1379,7 @@
 
         if (partyDate || partyTime || partyPlace || partyContact) {
             const footerPt = parseInt((document.getElementById('footerFontSize') || {}).value, 10) || 20;
-            html += `<div style="margin-top:20px; font-size:${footerPt}pt; font-weight:bold; color:#c2185b; line-height:1.9;">`;
+            html += `<div style="margin-top:20px; font-size:${footerPt}pt; font-weight:bold; color:#c2185b; line-height:1.9; text-align:left;">`;
             if (partyDate) html += `<p style="margin:0;">${partyDate}歡樂慶生會</p>`;
             if (partyTime) html += `<p style="margin:0;">活動時間：${partyTime}</p>`;
             if (partyPlace) html += `<p style="margin:0;">活動地點：${partyPlace}</p>`;
