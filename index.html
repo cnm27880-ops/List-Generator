@@ -991,9 +991,17 @@
             } else if (cols.length >= 4) {
                 bldg = (cols[1] || '').trim(); bed = (cols[2] || '').trim(); name = (cols[3] || '').trim();
                 days = NaN;
-                for (let j = 4; j < cols.length; j++) {
-                    const v = (cols[j] || '').trim();
-                    if (/^\d+$/.test(v)) { days = parseInt(v, 10); break; }
+                // 欄位順序：序號、樓館、床位、姓名、當月入住、入住日期、入住天數
+                // 優先採用第7欄「入住天數」(總天數)，避免只看當月入住而誤判舊住民為新住民
+                const totalV = (cols[6] || '').trim().replace(/,/g, '');
+                if (/^\d+$/.test(totalV)) {
+                    days = parseInt(totalV, 10);
+                } else {
+                    // 欄位不足時退回舊邏輯：取第一個純數字欄位
+                    for (let j = 4; j < cols.length; j++) {
+                        const v = (cols[j] || '').trim();
+                        if (/^\d+$/.test(v)) { days = parseInt(v, 10); break; }
+                    }
                 }
                 if (isNaN(days)) days = 999;
             } else { continue; }
